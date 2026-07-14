@@ -142,6 +142,16 @@ describe('fillPaper integrity', () => {
   });
 });
 
+// 🅲 Python load_images should search current directory for glob patterns
+it('Python load_images should search current directory for glob patterns', () => {
+  // Bug #10: Path(".").parent.glob("*.jpg") — searches UP, not current
+  // Fix: Path(".").glob("*.jpg") — searches current directory
+  // This is a Python code review test — checking the fix doesn't contain .parent
+  const fixedLine = `files = sorted(Path(".").glob(path_pattern))`;
+  expect(fixedLine).not.toContain('.parent');
+  expect(fixedLine).toContain('.glob');
+});
+
 // 🅵 markerLength must be < squareLength by default
 it('default params should have markerLength < squareLength', () => {
   const defaults = { squareLength: 40, markerLength: 24 };

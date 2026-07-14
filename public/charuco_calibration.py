@@ -93,7 +93,7 @@ def load_images(path_pattern: str):
             files.extend(sorted(path.glob(p)))
             files.extend(sorted(path.glob(p.upper())))
     else:
-        files = sorted(Path(".").parent.glob(path_pattern))
+        files = sorted(Path(".").glob(path_pattern))
 
     if not files:
         print(f"[ERROR] No images found matching: {path_pattern}")
@@ -209,14 +209,14 @@ def compute_per_view_errors(all_corners, all_ids, rvecs, tvecs, mtx, dist, board
 # ─────────────────────────────────────────────
 
 
-def save_results_json(ret, mtx, dist, rvecs, tvecs, image_size, out_path):
+def save_results_json(ret, mtx, dist, image_size, per_view_errors, out_path):
     """Save calibration results as a human-readable JSON file."""
     data = {
         "rms_error": float(ret),
         "image_size": list(image_size),
         "camera_matrix": mtx.tolist(),
         "distortion_coefficients": dist.tolist(),
-        "per_view_errors": [],
+        "per_view_errors": [float(e) for e in per_view_errors],
     }
     with open(out_path, "w") as f:
         json.dump(data, f, indent=2)
@@ -482,7 +482,7 @@ def main():
     # ── Save ──
     json_path = out_dir / f"{args.out}.json"
     xml_path = out_dir / f"{args.out}.xml"
-    save_results_json(ret, mtx, dist, rvecs, tvecs, image_size, json_path)
+    save_results_json(ret, mtx, dist, image_size, errors, json_path)
     save_results_xml(ret, mtx, dist, image_size, xml_path)
 
     # ── Visualise ──

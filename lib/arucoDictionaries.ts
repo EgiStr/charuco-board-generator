@@ -267,7 +267,7 @@ export function renderMarkerOnCanvas(
   cellSize: number,
   color: string = '#000000',
 ): void {
-  const { matrix, pixelSize } = getMarkerImage(dict, markerId, cellSize);
+  const { matrix } = getMarkerImage(dict, markerId, cellSize);
 
   ctx.fillStyle = color;
   for (let i = 0; i < matrix.length; i++) {
