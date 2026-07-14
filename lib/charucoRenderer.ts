@@ -321,26 +321,6 @@ export function renderPureBW(
   });
 }
 
-/**
- * Render to an offscreen canvas at a specific DPI for print.
- */
-export function renderCharucoBoardForPrint(
-  params: BoardParams,
-  dpi: number = 300,
-): HTMLCanvasElement {
-  const pxPerMm = dpi / 25.4;
-  const boardWidthMm = params.squaresX * params.squareLength + 2 * params.margin;
-  const boardHeightMm = params.squaresY * params.squareLength + 2 * params.margin;
-  return renderCharucoBoard(params, {
-    canvasWidth: Math.ceil(boardWidthMm * pxPerMm),
-    canvasHeight: Math.ceil(boardHeightMm * pxPerMm),
-    dpi,
-    backgroundColor: '#ffffff',
-    showInfo: false,
-    showScale: false,
-    pureBoard: true,
-    renderMode: 'print',
-  }).canvas;
-}
+
 
 
