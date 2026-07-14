@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Share2 } from 'lucide-react';
+import { Share2, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { BoardParams, getDefaultParams, serializeParams, deserializeParams } from '@/lib/utils';
 import ParameterControls from './ParameterControls';
 import BoardPreview from './BoardPreview';
@@ -60,6 +61,7 @@ export default function BoardGenerator() {
       subtitle: 'Generate printable ChArUco boards for camera calibration',
       copyUrl: 'Copy URL',
       copied: 'Copied!',
+      calibration: 'Calibration Guide',
       footer: 'ChArUco Board Generator — OpenCV-compatible',
     },
     id: {
@@ -67,6 +69,7 @@ export default function BoardGenerator() {
       subtitle: 'Hasilkan board ChArUco yang siap cetak untuk kalibrasi kamera',
       copyUrl: 'Salin URL',
       copied: 'Tersalin!',
+      calibration: 'Panduan Kalibrasi',
       footer: 'Generator Board ChArUco — Kompatibel dengan OpenCV',
     },
   };
@@ -88,6 +91,15 @@ export default function BoardGenerator() {
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle lang={lang} onToggle={handleLangToggle} />
+            <Link
+              href="/calibration"
+              className="hidden sm:flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium
+                hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors
+                text-zinc-600 dark:text-zinc-400"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              {t.calibration}
+            </Link>
             <button
               onClick={handleCopyUrl}
               className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium
@@ -131,9 +143,27 @@ export default function BoardGenerator() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12">
-        <p className="text-center text-xs text-zinc-400">
-          {t.footer}
-        </p>
+        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-zinc-400">
+            {t.footer}
+          </p>
+          <Link
+            href="/calibration"
+            className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400
+              hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors sm:hidden"
+          >
+            <BookOpen className="w-3 h-3" />
+            {t.calibration}
+          </Link>
+          <Link
+            href="/calibration"
+            className="hidden sm:flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400
+              hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+          >
+            <BookOpen className="w-3 h-3" />
+            {t.calibration}
+          </Link>
+        </div>
       </footer>
     </div>
   );

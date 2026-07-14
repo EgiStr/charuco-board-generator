@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BoardParams, getCornerCount, getBoardPhysicalSize, formatDimension } from '@/lib/utils';
 import { renderCharucoBoard } from '@/lib/charucoRenderer';
+import { getA4BoardMetrics } from '@/lib/accuracy';
 
 interface BoardPreviewProps {
   params: BoardParams;
@@ -12,6 +13,12 @@ interface BoardPreviewProps {
 export default function BoardPreview({ params, className = '' }: BoardPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [accuracy, setAccuracy] = useState<{
+    mmPerPx: number;
+    pxPerMm: number;
+    fitsA4: boolean;
+    fitsA3: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -41,10 +48,25 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
         dpi: 72,
         backgroundColor: '#ffffff',
         showInfo: true,
+        showScale: true,
       });
 
       // Draw the result canvas onto our visible canvas
       ctx.drawImage(result.canvas, 0, 0);
+
+      // Update accuracy info
+      const metrics = getA4BoardMetrics(
+        params.squaresX,
+        params.squaresY,
+        params.squareLength,
+        params.margin,
+      );
+      setAccuracy({
+        mmPerPx: result.mmPerPx,
+        pxPerMm: result.pxPerMm,
+        fitsA4: metrics.fitsA4,
+        fitsA3: metrics.fitsA3,
+      });
     } catch (err) {
       console.error('Render error:', err);
     }
@@ -59,13 +81,10 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
         ref={containerRef}
         className="flex-1 min-h-[300px] rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden"
       >
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full"
-        />
+        <canvas ref={canvasRef} className="w-full h-full" />
       </div>
 
-      {/* Board Info */}
+      {/* Board Info + Accuracy */}
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
           <span className="text-zinc-500 dark:text-zinc-400">Board</span>
@@ -80,7 +99,8 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
         <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
           <span className="text-zinc-500 dark:text-zinc-400">Size</span>
           <p className="font-semibold text-zinc-800 dark:text-zinc-200">
-            {formatDimension(phys.width, params.unit)} × {formatDimension(phys.height, params.unit)}
+            {formatDimension(phys.width, params.unit)} ×{' '}
+            {formatDimension(phys.height, params.unit)}
           </p>
         </div>
         <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
@@ -90,6 +110,35 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
           </p>
         </div>
       </div>
+
+      {/* Accuracy details — shown only after first render */}
+      {accuracy && (
+        <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
+          <span className="text-zinc-500 dark:text-zinc-400">Accuracy Check</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+            <span className="text-zinc-700 dark:text-zinc-300">
+              1px = <strong>{accuracy.mmPerPx.toFixed(4)}mm</strong>
+            </span>
+            <span className="text-zinc-700 dark:text-zinc-300">
+              <strong>{accuracy.pxPerMm.toFixed(1)}</strong> px/mm
+            </span>
+            <span
+              className={`font-semibold ${
+                accuracy.fitsA4
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-amber-600 dark:text-amber-400'
+              }`}
+            >
+              {accuracy.fitsA4 ? '✓ Fits A4' : '✗ Exceeds A4'}
+            </span>
+            {accuracy.fitsA3 && !accuracy.fitsA4 && (
+              <span className="font-semibold text-green-600 dark:text-green-400">
+                ✓ Fits A3
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
