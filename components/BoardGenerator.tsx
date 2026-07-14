@@ -120,7 +120,7 @@ export default function BoardGenerator() {
       <main className="mx-auto max-w-7xl px-4 py-6">
         {/* Presets */}
         <section className="mb-6">
-          <Presets onApply={handlePreset} lang={lang} />
+          <Presets params={params} onApply={handlePreset} lang={lang} />
         </section>
 
         {/* Two column layout */}
