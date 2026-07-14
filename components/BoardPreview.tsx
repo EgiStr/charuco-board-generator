@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { BoardParams, getCornerCount, getBoardPhysicalSize, formatDimension } from '@/lib/utils';
+import { BoardParams, getCornerCount, getBoardPhysicalSize, formatDimension, getPaperSize } from '@/lib/utils';
 import { renderCharucoBoard } from '@/lib/charucoRenderer';
-import { getA4BoardMetrics } from '@/lib/accuracy';
+import { getA4BoardMetrics, checkPaperFit } from '@/lib/accuracy';
 
 interface BoardPreviewProps {
   params: BoardParams;
@@ -74,6 +74,8 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
 
   const phys = getBoardPhysicalSize(params);
   const corners = getCornerCount(params);
+  const paperDims = getPaperSize(params.paperSize, params.orientation, params.customWidth, params.customHeight);
+  const fit = checkPaperFit(params, paperDims);
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -139,6 +141,18 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
           </div>
         </div>
       )}
+
+      {/* Paper Fit Warning */}
+      <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-medium ${
+        fit.fits
+          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+          : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+      }`}>
+        {fit.fits
+          ? `✅ Board fits ${params.paperSize} at 1:1 scale (${fit.boardWidthMm}×${fit.boardHeightMm}mm within ${fit.pageWidthMm}×${fit.pageHeightMm}mm)`
+          : `❌ Board ${fit.boardWidthMm}×${fit.boardHeightMm}mm is too large for ${params.paperSize} (${fit.pageWidthMm}×${fit.pageHeightMm}mm). ${fit.scaleNeeded < 1 ? `Will be scaled by ${(fit.scaleNeeded * 100).toFixed(0)}%.` : 'Try a larger paper size.'}`
+        }
+      </div>
     </div>
   );
 }

@@ -31,17 +31,15 @@ export async function generatePdf(params: BoardParams): Promise<Blob> {
   const boardWidthMm = squaresX * squareLength + 2 * margin;
   const boardHeightMm = squaresY * squareLength + 2 * margin;
 
-  // Centre the board on the page
-  const maxBoardWidth = pageDims.width - margin * 2;
-  const maxBoardHeight = pageDims.height - margin * 2;
-  const scale = Math.min(
-    maxBoardWidth / boardWidthMm,
-    maxBoardHeight / boardHeightMm,
-    1,
-  );
+  // Check if board fits on the page at 1:1; scale down only if necessary
+  const scale =
+    boardWidthMm <= pageDims.width && boardHeightMm <= pageDims.height
+      ? 1.0
+      : Math.min(pageDims.width / boardWidthMm, pageDims.height / boardHeightMm);
   const displayBoardWidth = boardWidthMm * scale;
   const displayBoardHeight = boardHeightMm * scale;
 
+  // Centre the board on the page
   const offsetX = (pageDims.width - displayBoardWidth) / 2;
   const offsetY = (pageDims.height - displayBoardHeight) / 2;
 
@@ -159,40 +157,28 @@ export function downloadSvg(params: BoardParams): void {
 /**
  * Print via browser print dialog.
  *
- * Opens a new window with the rendered board and triggers the native
- * print dialog. The print page uses pure black/white for best results.
+ * Uses the same PDF as downloadPdf() to guarantee correct physical size.
+ * Opens the PDF in a new tab where the user presses Ctrl+P (or Cmd+P).
+ * Falls back to downloading the PDF if the pop-up is blocked.
  */
 export function printBoard(params: BoardParams): void {
-  const result = renderCharucoBoard(params, {
-    canvasWidth: 1200,
-    canvasHeight: Math.ceil(
-      (1200 * (params.squaresY * params.squareLength + 2 * params.margin)) /
-        (params.squaresX * params.squareLength + 2 * params.margin),
-    ),
-    dpi: 72,
-    backgroundColor: '#ffffff',
-    showInfo: true,
-    showScale: true,
+  generatePdf(params).then((blob) => {
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (!w) {
+      // Pop-up blocked — fallback: trigger download and instruct user
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'charuco-board-print.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      alert(
+        'Print popup was blocked. The PDF has been downloaded — ' +
+          'please open it and print from your PDF viewer.',
+      );
+    }
+    // Keep the blob URL alive long enough for the print tab to load
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   });
-
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>ChArUco Board - Print</title>
-      <style>
-        @page { margin: 0; }
-        body { margin: 0; display: flex; justify-content: center; align-items: center; background: #fff; }
-        img { max-width: 100%; max-height: 100vh; }
-      </style>
-    </head>
-    <body>
-      <img src="${result.canvas.toDataURL('image/png')}" onload="window.print(); window.close();" />
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
 }

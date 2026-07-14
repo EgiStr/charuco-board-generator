@@ -73,3 +73,37 @@ export function getA4BoardMetrics(
     scaleRatio: Math.min(A4.w / boardWidth, A4.h / boardHeight),
   };
 }
+
+export interface PaperFitResult {
+  boardWidthMm: number;
+  boardHeightMm: number;
+  pageWidthMm: number;
+  pageHeightMm: number;
+  fits: boolean;
+  scaleNeeded: number;
+  orientation: 'portrait' | 'landscape';
+}
+
+/**
+ * Check whether a board configuration fits on a given paper size.
+ * Returns fit status, dimensions, and the scale factor needed.
+ */
+export function checkPaperFit(
+  params: { squaresX: number; squaresY: number; squareLength: number; margin: number },
+  paperSize: { width: number; height: number }
+): PaperFitResult {
+  const boardW = params.squaresX * params.squareLength + 2 * params.margin;
+  const boardH = params.squaresY * params.squareLength + 2 * params.margin;
+  const fits = boardW <= paperSize.width && boardH <= paperSize.height;
+  const scaleNeeded = Math.min(paperSize.width / boardW, paperSize.height / boardH);
+  return {
+    boardWidthMm: boardW,
+    boardHeightMm: boardH,
+    pageWidthMm: paperSize.width,
+    pageHeightMm: paperSize.height,
+    fits,
+    scaleNeeded: scaleNeeded < 1 ? scaleNeeded : 1,
+    orientation: paperSize.width > paperSize.height ? 'landscape' : 'portrait',
+  };
+}
+
