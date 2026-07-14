@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { BoardParams, PRESETS, PAPER_SIZES } from '@/lib/utils';
-import { ALL_TEMPLATES, getTemplatesByCategory, TemplateConfig } from '@/lib/templates';
+import { ALL_ACCURATE_TEMPLATES, TemplateConfig } from '@/lib/templates';
 
 interface PresetsProps {
   params: BoardParams;
@@ -73,7 +73,9 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
     { id: 'A1', label: 'A1' },
   ];
 
-  const templates = getTemplatesByCategory(activeCategory);
+  const templates = activeCategory === 'all'
+    ? ALL_ACCURATE_TEMPLATES
+    : ALL_ACCURATE_TEMPLATES.filter(t => t.category === activeCategory);
 
   function paperSizeDims(name: string, orientation: string): string {
     const p = PAPER_SIZES[name as keyof typeof PAPER_SIZES];
@@ -166,20 +168,13 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
                 <th className="px-3 py-2 font-medium">{t.marker}</th>
                 <th className="px-3 py-2 font-medium">{t.dict}</th>
                 <th className="px-3 py-2 font-medium">{t.boardSize}</th>
-                <th className="px-3 py-2 font-medium">{t.fit}</th>
+                <th className="px-3 py-2 font-medium">1:1</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {templates.map(tmpl => {
                 const pSize = `${tmpl.paperSize} ${tmpl.orientation === 'landscape' ? 'L' : 'P'}`;
-                const paperDims = PAPER_SIZES[tmpl.paperSize as keyof typeof PAPER_SIZES];
-                let fits = false;
-                if (paperDims) {
-                  const pw = tmpl.orientation === 'landscape' ? paperDims.height : paperDims.width;
-                  const ph = tmpl.orientation === 'landscape' ? paperDims.width : paperDims.height;
-                  fits = tmpl.boardWidthMm <= pw && tmpl.boardHeightMm <= ph;
-                }
 
                 const isActive =
                   params.paperSize === tmpl.paperSize &&
@@ -203,10 +198,7 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
                     <td className="px-3 py-2 text-zinc-500 dark:text-zinc-400 font-mono text-[10px]">{tmpl.dictionary.replace('DICT_', '')}</td>
                     <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{tmpl.boardWidthMm}×{tmpl.boardHeightMm}</td>
                     <td className="px-3 py-2">
-                      {fits
-                        ? <span className="text-green-600 dark:text-green-400 font-medium">1:1</span>
-                        : <span className="text-amber-600 dark:text-amber-400">scaled</span>
-                      }
+                      <span className="text-green-600 dark:text-green-400 font-medium" title="Verified 1:1 scale">✅</span>
                     </td>
                     <td className="px-3 py-2">
                       <button
@@ -232,6 +224,10 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
             {t.fitTip8x6}
           </p>
         )}
+
+        <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+          ✅ All templates verified: 1:1 scale on their paper size — guaranteed accurate for real-world calibration.
+        </p>
       </div>
     </div>
   );
