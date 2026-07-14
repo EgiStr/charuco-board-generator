@@ -174,7 +174,7 @@ export function fillPaper(
   orientation: 'portrait' | 'landscape',
   targetSquaresX: number,
   targetSquaresY: number
-): { squareLength: number; boardWidthMm: number; boardHeightMm: number; margin: number } | null {
+): { squareLength: number; markerLength: number; boardWidthMm: number; boardHeightMm: number; margin: number } | null {
   const PAPER: Record<string, { w: number; h: number }> = {
     A4: { w: 210, h: 297 },
     A3: { w: 297, h: 420 },
@@ -203,6 +203,7 @@ export function fillPaper(
 
   return {
     squareLength: sq,
+    markerLength: Math.max(5, Math.round(sq * 0.55)),
     boardWidthMm: targetSquaresX * sq,
     boardHeightMm: targetSquaresY * sq,
     margin: 0,

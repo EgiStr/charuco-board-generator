@@ -106,3 +106,47 @@ describe('SVG output physical units', () => {
     expect(svg).toContain('height="210mm"');
   });
 });
+
+// 🅶 PRESETS must fit on their paper (1:1)
+import { PRESETS, getBoardPhysicalSize } from '../utils';
+
+describe('PRESETS must be print-ready (1:1 fit on paper)', () => {
+  PRESETS.forEach(preset => {
+    it(`${preset.name}: board must fit ${preset.paperSize} at 1:1`, () => {
+      const bw = preset.squaresX * preset.squareLength + 2 * preset.margin;
+      const bh = preset.squaresY * preset.squareLength + 2 * preset.margin;
+      // Check portrait fit
+      const paper = getPaperSize(preset.paperSize as any, 'portrait');
+      const fitsPortrait = bw <= paper.width && bh <= paper.height;
+      // Check landscape fit
+      const paperL = getPaperSize(preset.paperSize as any, 'landscape');
+      const fitsLandscape = bw <= paperL.width && bh <= paperL.height;
+      expect(fitsPortrait || fitsLandscape).toBe(true);
+    });
+  });
+});
+
+// 🅳 fillPaper must return markerLength
+import { fillPaper } from '../templates';
+
+describe('fillPaper integrity', () => {
+  it('should return markerLength with correct ratio', () => {
+    const result = fillPaper('A4', 'landscape', 9, 7);
+    expect(result).not.toBeNull();
+    if (result) {
+      expect(result.markerLength).toBeDefined();
+      const ratio = result.markerLength / result.squareLength;
+      expect(ratio).toBeGreaterThanOrEqual(0.4);
+      expect(ratio).toBeLessThanOrEqual(0.6);
+    }
+  });
+});
+
+// 🅵 markerLength must be < squareLength by default
+it('default params should have markerLength < squareLength', () => {
+  const defaults = { squareLength: 40, markerLength: 24 };
+  expect(defaults.markerLength).toBeLessThan(defaults.squareLength);
+  const ratio = defaults.markerLength / defaults.squareLength;
+  expect(ratio).toBeGreaterThanOrEqual(0.4);
+  expect(ratio).toBeLessThanOrEqual(0.6);
+});

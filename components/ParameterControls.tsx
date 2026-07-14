@@ -56,7 +56,14 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
   const t = T[lang];
 
   const update = (partial: Partial<BoardParams>) => {
-    onChange({ ...params, ...partial });
+    const newParams = { ...params, ...partial };
+    // Auto-sync markerLength if squareLength changed and ratio would be invalid
+    if (partial.squareLength && partial.squareLength !== params.squareLength) {
+      if (newParams.markerLength >= newParams.squareLength) {
+        newParams.markerLength = Math.round(newParams.squareLength * 0.55);
+      }
+    }
+    onChange(newParams);
   };
 
   const PaperSizeSelector = (
@@ -184,7 +191,12 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
         max={max}
         step={step}
         onChange={(e) => {
-          const v = parseFloat(e.target.value);
+          const raw = e.target.value;
+          if (raw === '') {
+            onValChange(min);
+            return;
+          }
+          const v = parseFloat(raw);
           if (!isNaN(v)) onValChange(Math.max(min, Math.min(max, v)));
         }}
         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800
@@ -226,8 +238,9 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
             label={`${t.markerLength} (mm)`}
             value={params.markerLength}
             onChange={(v) => update({ markerLength: v })}
-            min={5} max={200}
-            note="Must be < Square Length"
+            min={5}
+            max={params.squareLength - 1}
+            note={`Must be < Square Length (${params.squareLength}mm). Recommended: ${Math.round(params.squareLength * 0.55)}mm`}
           />
         </div>
         <div className="space-y-2">

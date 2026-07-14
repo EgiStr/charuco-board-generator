@@ -18,7 +18,7 @@ const PX_PER_MM = PRINT_DPI / 25.4; // 11.811
 const MM_PER_PX = 25.4 / PRINT_DPI; // 0.0847
 
 /** Find the smallest ISO paper that fits the board (checks both orientations). */
-function bestPaper(wMm: number, hMm: number): { name: string; orientation: 'portrait' | 'landscape'; scalePct: number } | null {
+function bestPaper(wMm: number, hMm: number): { name: string; orientation: 'portrait' | 'landscape' } | null {
   const papers = [
     { name: 'A4' as const, w: 210, h: 297 },
     { name: 'A3' as const, w: 297, h: 420 },
@@ -26,8 +26,8 @@ function bestPaper(wMm: number, hMm: number): { name: string; orientation: 'port
     { name: 'A1' as const, w: 594, h: 841 },
   ];
   for (const p of papers) {
-    if (wMm <= p.w && hMm <= p.h) return { name: p.name, orientation: 'portrait', scalePct: 100 };
-    if (wMm <= p.h && hMm <= p.w) return { name: p.name, orientation: 'landscape', scalePct: 100 };
+    if (wMm <= p.w && hMm <= p.h) return { name: p.name, orientation: 'portrait' };
+    if (wMm <= p.h && hMm <= p.w) return { name: p.name, orientation: 'landscape' };
   }
   return null;
 }

@@ -57,6 +57,7 @@ export default function BoardGenerator() {
       setParams(prev => ({
         ...prev,
         squareLength: result.squareLength,
+        markerLength: result.markerLength,
         margin: 0,
       }));
     }
