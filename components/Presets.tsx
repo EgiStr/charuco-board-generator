@@ -71,6 +71,7 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
     { id: 'A3', label: 'A3' },
     { id: 'A2', label: 'A2' },
     { id: 'A1', label: 'A1' },
+    { id: 'fullbleed', label: lang === 'en' ? '🔄 Full-Bleed' : '🔄 Penuh Kertas' },
   ];
 
   const templates = activeCategory === 'all'

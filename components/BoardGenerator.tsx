@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Share2, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { BoardParams, getDefaultParams, serializeParams, deserializeParams } from '@/lib/utils';
+import { fillPaper } from '@/lib/templates';
 import ParameterControls from './ParameterControls';
 import BoardPreview from './BoardPreview';
 import DownloadOptions from './DownloadOptions';
@@ -48,6 +49,18 @@ export default function BoardGenerator() {
     setLang(next);
     localStorage.setItem('charuco-lang', next);
   }, [lang]);
+
+  const handleFillPaper = useCallback(() => {
+    const result = fillPaper(params.paperSize, params.orientation, params.squaresX, params.squaresY);
+    if (result) {
+      setPureBoard(true);
+      setParams(prev => ({
+        ...prev,
+        squareLength: result.squareLength,
+        margin: 0,
+      }));
+    }
+  }, [params.paperSize, params.orientation, params.squaresX, params.squaresY]);
 
   const handleCopyUrl = useCallback(() => {
     const url = new URL(window.location.href);
@@ -106,6 +119,15 @@ export default function BoardGenerator() {
               }`}
             >
               {pureBoard ? '🧹 ' + t.pureBoard : '📝 ' + t.withInfo}
+            </button>
+            <button
+              onClick={handleFillPaper}
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors
+                bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300
+                hover:bg-emerald-200 dark:hover:bg-emerald-800/40"
+              title={lang === 'en' ? 'Fill entire paper (zero margin)' : 'Penuhi seluruh kertas (tanpa margin)'}
+            >
+              📐 {lang === 'en' ? 'Fill Paper' : 'Penuhi Kertas'}
             </button>
             <LanguageToggle lang={lang} onToggle={handleLangToggle} />
             <Link

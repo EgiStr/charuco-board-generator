@@ -120,6 +120,7 @@ export const ALL_TEMPLATES: TemplateConfig[] = [
   ...A3_TEMPLATES,
   ...A2_TEMPLATES,
   ...A1_TEMPLATES,
+  ...getFullBleedTemplates(),
 ];
 
 // ── Auto-Suggest: given paper size, find optimal square size ──
@@ -162,6 +163,97 @@ export function suggestSquareSize(
     boardWidthMm: targetSquaresX * rounded + 2 * margin,
     boardHeightMm: targetSquaresY * rounded + 2 * margin,
   };
+}
+
+/**
+ * Calculate square size to fill the entire paper (zero margin).
+ * Returns the configuration that maximizes board coverage.
+ */
+export function fillPaper(
+  paperSize: string,
+  orientation: 'portrait' | 'landscape',
+  targetSquaresX: number,
+  targetSquaresY: number
+): { squareLength: number; boardWidthMm: number; boardHeightMm: number; margin: number } | null {
+  const PAPER: Record<string, { w: number; h: number }> = {
+    A4: { w: 210, h: 297 },
+    A3: { w: 297, h: 420 },
+    A2: { w: 420, h: 594 },
+    A1: { w: 594, h: 841 },
+  };
+
+  const paper = PAPER[paperSize];
+  if (!paper) return null;
+
+  const pw = orientation === 'landscape' ? paper.h : paper.w;
+  const ph = orientation === 'landscape' ? paper.w : paper.h;
+
+  // No margin (full bleed)
+  const margin = 0;
+  const availW = pw;
+  const availH = ph;
+
+  // Max square size that fills the paper
+  const sqFromW = availW / targetSquaresX;
+  const sqFromH = availH / targetSquaresY;
+  const squareLength = Math.min(sqFromW, sqFromH);
+
+  // Round down to nearest mm — exact fit is more important than round numbers
+  const sq = Math.floor(squareLength);
+
+  return {
+    squareLength: sq,
+    boardWidthMm: targetSquaresX * sq,
+    boardHeightMm: targetSquaresY * sq,
+    margin: 0,
+  };
+}
+
+/**
+ * Full-bleed templates where margin=0 and board fills the entire paper.
+ */
+export function getFullBleedTemplates(): TemplateConfig[] {
+  interface FullBleedCfg {
+    id: string; paperSize: string; orientation: string;
+    squaresX: number; squaresY: number; category: string;
+    markerLength: number; dictionary: string;
+  }
+  const configs: FullBleedCfg[] = [
+    // 8x6 corners (9x7 squares) — standard
+    { id: 'fb-a4-9x7', paperSize: 'A4', orientation: 'landscape', squaresX: 9, squaresY: 7, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a3-9x7', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a2-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a1-9x7', paperSize: 'A1', orientation: 'landscape', squaresX: 9, squaresY: 7, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    // More squares for A4
+    { id: 'fb-a4-10x7', paperSize: 'A4', orientation: 'landscape', squaresX: 10, squaresY: 7, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a4-11x8', paperSize: 'A4', orientation: 'landscape', squaresX: 11, squaresY: 8, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a4-12x9', paperSize: 'A4', orientation: 'landscape', squaresX: 12, squaresY: 9, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    // More squares for A3
+    { id: 'fb-a3-12x8', paperSize: 'A3', orientation: 'landscape', squaresX: 12, squaresY: 8, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a3-13x9', paperSize: 'A3', orientation: 'landscape', squaresX: 13, squaresY: 9, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a3-14x10', paperSize: 'A3', orientation: 'landscape', squaresX: 14, squaresY: 10, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    // More squares for A2
+    { id: 'fb-a2-13x9', paperSize: 'A2', orientation: 'landscape', squaresX: 13, squaresY: 9, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a2-14x10', paperSize: 'A2', orientation: 'landscape', squaresX: 14, squaresY: 10, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    // More squares for A1
+    { id: 'fb-a1-14x9', paperSize: 'A1', orientation: 'landscape', squaresX: 14, squaresY: 9, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+    { id: 'fb-a1-15x10', paperSize: 'A1', orientation: 'landscape', squaresX: 15, squaresY: 10, category: 'fullbleed', markerLength: 0, dictionary: 'DICT_6X6_250' },
+  ];
+
+  return configs.map(cfg => {
+    const result = fillPaper(cfg.paperSize, cfg.orientation as 'portrait' | 'landscape', cfg.squaresX, cfg.squaresY);
+    if (!result) return null;
+    return {
+      ...cfg,
+      squareLength: result.squareLength,
+      margin: 0,
+      boardWidthMm: result.boardWidthMm,
+      boardHeightMm: result.boardHeightMm,
+      internalCorners: `${cfg.squaresX - 1}\u00D7${cfg.squaresY - 1}`,
+      markerLength: Math.round(result.squareLength * 0.55),
+      orientation: cfg.orientation as 'portrait' | 'landscape',
+    } as TemplateConfig;
+  }).filter(Boolean) as TemplateConfig[];
 }
 
 // ── Get templates filtered by category ──
