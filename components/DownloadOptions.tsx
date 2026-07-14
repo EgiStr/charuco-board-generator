@@ -85,7 +85,7 @@ export default function DownloadOptions({ params, lang, pureBoard }: DownloadOpt
     `flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all border ${
       busy === type
         ? 'opacity-50 cursor-wait bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
-        : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-sm text-zinc-700 dark:text-zinc-300'
+        : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-sm text-zinc-700 dark:text-zinc-300'
     }`;
 
   return (
@@ -100,19 +100,19 @@ export default function DownloadOptions({ params, lang, pureBoard }: DownloadOpt
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button onClick={handlePdf} disabled={busy !== null} className={btnClass('pdf')}>
-          <FileDown className="w-4 h-4 text-red-500" />
+          <FileDown className="w-4 h-4 text-zinc-500" />
           {busy === 'pdf' ? t.generating : t.pdf}
         </button>
         <button onClick={handlePng} disabled={busy !== null} className={btnClass('png')}>
-          <FileImage className="w-4 h-4 text-blue-500" />
+          <FileImage className="w-4 h-4 text-zinc-500" />
           {busy === 'png' ? t.generating : t.png}
         </button>
         <button onClick={handleSvg} disabled={busy !== null} className={btnClass('svg')}>
-          <FileType className="w-4 h-4 text-green-500" />
+          <FileType className="w-4 h-4 text-zinc-500" />
           {busy === 'svg' ? t.generating : t.svg}
         </button>
         <button onClick={handlePrint} className={btnClass('print')}>
-          <Printer className="w-4 h-4 text-purple-500" />
+          <Printer className="w-4 h-4 text-zinc-500" />
           {t.print}
         </button>
       </div>

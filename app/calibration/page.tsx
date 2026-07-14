@@ -102,10 +102,10 @@ const Content = {
     s4BoardSize: 'Board size (mm)',
     s4Use: 'Recommended use',
     s4Rows: [
-      { sq: '25', a4: '7×5 = ✅', a3: '11×8 = ✅', size: '175×125', use: 'High accuracy, close range' },
-      { sq: '30', a4: '6×4 = ✅', a3: '9×6 = ✅', size: '180×120', use: 'Standard calibration' },
-      { sq: '40', a4: '5×3 = ✅', a3: '7×5 = ✅', size: '200×120', use: 'Large board, balanced' },
-      { sq: '50', a4: '4×3 = ✅', a3: '6×4 = ✅', size: '200×150', use: 'Webcam / far distance' },
+      { sq: '25', a4: true, a3: true, size: '175×125', use: 'High accuracy, close range' },
+      { sq: '30', a4: true, a3: true, size: '180×120', use: 'Standard calibration' },
+      { sq: '40', a4: true, a3: true, size: '200×120', use: 'Large board, balanced' },
+      { sq: '50', a4: true, a3: true, size: '200×150', use: 'Webcam / far distance' },
     ],
     // Section 5
     s5Title: 'Downloads',
@@ -211,10 +211,10 @@ const Content = {
     s4BoardSize: 'Ukuran board (mm)',
     s4Use: 'Penggunaan',
     s4Rows: [
-      { sq: '25', a4: '7×5 = ✅', a3: '11×8 = ✅', size: '175×125', use: 'Akurasi tinggi, jarak dekat' },
-      { sq: '30', a4: '6×4 = ✅', a3: '9×6 = ✅', size: '180×120', use: 'Kalibrasi standar' },
-      { sq: '40', a4: '5×3 = ✅', a3: '7×5 = ✅', size: '200×120', use: 'Board besar, seimbang' },
-      { sq: '50', a4: '4×3 = ✅', a3: '6×4 = ✅', size: '200×150', use: 'Webcam / jarak jauh' },
+      { sq: '25', a4: true, a3: true, size: '175×125', use: 'Akurasi tinggi, jarak dekat' },
+      { sq: '30', a4: true, a3: true, size: '180×120', use: 'Kalibrasi standar' },
+      { sq: '40', a4: true, a3: true, size: '200×120', use: 'Board besar, seimbang' },
+      { sq: '50', a4: true, a3: true, size: '200×150', use: 'Webcam / jarak jauh' },
     ],
     s5Title: 'Unduhan',
     s5Desc: 'Dapatkan script kalibrasi dan Jupyter notebook untuk penggunaan offline.',
@@ -1212,11 +1212,11 @@ export default function CalibrationPage() {
       {/* Main */}
       <main className="mx-auto max-w-5xl px-4 py-6 space-y-10">
         {/* ── Section 1: What You Need ── */}
-        <Section icon={<Ruler className="w-5 h-5 text-blue-500" />} title={t.s1Title}>
+        <Section icon={<Ruler className="w-5 h-5 text-zinc-500" />} title={t.s1Title}>
           <ul className="space-y-2">
             {t.s1Items.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                <span className="mt-0.5 text-blue-500 shrink-0">&#8226;</span>
+                <span className="mt-0.5 text-zinc-500 shrink-0">&#8226;</span>
                 <span dangerouslySetInnerHTML={{ __html: item }} />
               </li>
             ))}
@@ -1294,10 +1294,10 @@ export default function CalibrationPage() {
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
                 {t.s4Rows.map((row, i) => (
                   <tr key={i} className="bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400">
-                    <td className="px-4 py-3 font-mono text-zinc-900 dark:text-zinc-100">{row.sq}</td>
-                    <td className="px-4 py-3">{row.a4}</td>
-                    <td className="px-4 py-3">{row.a3}</td>
-                    <td className="px-4 py-3 font-mono">{row.size}</td>
+                    <td className="px-4 py-3 font-semibold text-zinc-800 dark:text-zinc-200">{row.sq}</td>
+                    <td className="px-4 py-3">{row.a4 ? <Check className="w-4 h-4 text-green-500 inline-block" /> : '—'}</td>
+                    <td className="px-4 py-3">{row.a3 ? <Check className="w-4 h-4 text-green-500 inline-block" /> : '—'}</td>
+                    <td className="px-4 py-3">{row.size}</td>
                     <td className="px-4 py-3">{row.use}</td>
                   </tr>
                 ))}
@@ -1307,17 +1307,17 @@ export default function CalibrationPage() {
         </Section>
 
         {/* ── Section 5: Downloads ── */}
-        <Section icon={<Download className="w-5 h-5 text-blue-500" />} title={t.s5Title}>
+        <Section icon={<Download className="w-5 h-5 text-zinc-500" />} title={t.s5Title}>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{t.s5Desc}</p>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={handleDownloadPy}
               className="flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium
                 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700
-                hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-sm
+                hover:border-zinc-400 dark:hover:border-zinc-500 hover:shadow-sm
                 text-zinc-700 dark:text-zinc-300 transition-all"
             >
-              <Download className="w-4 h-4 text-blue-500" />
+              <Download className="w-4 h-4 text-zinc-500" />
               {t.downloadScript}
             </button>
             <button

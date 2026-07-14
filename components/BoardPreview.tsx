@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { Printer, Check, X, Ruler, FileText } from 'lucide-react';
 import { BoardParams, getCornerCount, getBoardPhysicalSize, formatDimension, getPaperSize } from '@/lib/utils';
 import { renderCharucoBoard } from '@/lib/charucoRenderer';
 import { checkPaperFit } from '@/lib/accuracy';
@@ -91,11 +92,11 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
 
   const T = {
     en: {
-      accuracy: '🖨️ Print Accuracy (300 DPI) — FIXED',
+      accuracy: 'Print Accuracy (300 DPI) — FIXED',
       pxPerMm: 'px/mm',
       square: 'Square',
       board: 'Board',
-      printSize: '📄 Print Size on Selected Paper',
+      printSize: 'Print Size on Selected Paper',
       pxAt300: 'px at 300 DPI',
       tooLarge: 'Board TOO LARGE',
       needsScale: 'needs',
@@ -105,11 +106,11 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
       atScale: 'at',
     },
     id: {
-      accuracy: '🖨️ Akurasi Cetak (300 DPI) — TETAP',
+      accuracy: 'Akurasi Cetak (300 DPI) — TETAP',
       pxPerMm: 'px/mm',
       square: 'Kotak',
       board: 'Board',
-      printSize: '📄 Ukuran Cetak di Kertas Terpilih',
+      printSize: 'Ukuran Cetak di Kertas Terpilih',
       pxAt300: 'px di 300 DPI',
       tooLarge: 'Board TERLALU BESAR',
       needsScale: 'butuh',
@@ -159,7 +160,10 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
 
       {/* Print Accuracy — FIXED at 300 DPI, not screen preview */}
       <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
-        <span className="text-zinc-500 dark:text-zinc-400">{t.accuracy}</span>
+        <span className="text-zinc-500 dark:text-zinc-400">
+          <Printer className="w-3 h-3 inline-block mr-1" />
+          {t.accuracy}
+        </span>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
           <span className="text-zinc-700 dark:text-zinc-300">
             1px = <strong>{MM_PER_PX.toFixed(4)}mm</strong>
@@ -178,7 +182,10 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
 
       {/* Print Size on Selected Paper */}
       <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
-        <span className="text-zinc-500 dark:text-zinc-400">{t.printSize}</span>
+        <span className="text-zinc-500 dark:text-zinc-400">
+          <FileText className="w-3 h-3 inline-block mr-1" />
+          {t.printSize}
+        </span>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
           <span className="text-zinc-700 dark:text-zinc-300">
             Board: <strong>{phys.width.toFixed(0)}&times;{phys.height.toFixed(0)}mm</strong> &rarr; {(phys.width * PX_PER_MM).toFixed(0)}&times;{(phys.height * PX_PER_MM).toFixed(0)} {t.pxAt300}
@@ -210,7 +217,10 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
 
       {/* Paper Coverage */}
       <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
-        <span className="text-zinc-500 dark:text-zinc-400">📐 Paper Coverage</span>
+        <span className="text-zinc-500 dark:text-zinc-400">
+          <Ruler className="w-3 h-3 inline-block mr-1" />
+          Paper Coverage
+        </span>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
           {params.margin === 0 ? (
             <span className="font-semibold text-green-600 dark:text-green-400">
@@ -234,8 +244,8 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
           : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
       }`}>
         {fit.fits
-          ? `✅ Board fits ${params.paperSize} at 1:1 scale (${fit.boardWidthMm}\u00d7${fit.boardHeightMm}mm within ${fit.pageWidthMm}\u00d7${fit.pageHeightMm}mm)`
-          : `❌ Board ${fit.boardWidthMm}\u00d7${fit.boardHeightMm}mm is too large for ${params.paperSize} (${fit.pageWidthMm}\u00d7${fit.pageHeightMm}mm). ${fit.scaleNeeded < 1 ? `Will be scaled by ${(fit.scaleNeeded * 100).toFixed(0)}%.` : 'Try a larger paper size.'}`
+          ? <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-green-500" /> Board fits {params.paperSize} at 1:1 scale ({fit.boardWidthMm}\u00d7{fit.boardHeightMm}mm within {fit.pageWidthMm}\u00d7{fit.pageHeightMm}mm)</span>
+          : <span className="flex items-center gap-1"><X className="w-3.5 h-3.5 text-red-500" /> Board {fit.boardWidthMm}\u00d7{fit.boardHeightMm}mm is too large for {params.paperSize} ({fit.pageWidthMm}\u00d7{fit.pageHeightMm}mm). {fit.scaleNeeded < 1 ? `Will be scaled by ${(fit.scaleNeeded * 100).toFixed(0)}%.` : 'Try a larger paper size.'}</span>
         }
       </div>
     </div>

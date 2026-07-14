@@ -1,5 +1,7 @@
 'use client';
 
+import { Ruler, Lightbulb } from 'lucide-react';
+
 interface PaperReferenceProps {
   lang: 'en' | 'id';
 }
@@ -7,7 +9,7 @@ interface PaperReferenceProps {
 export default function PaperReference({ lang }: PaperReferenceProps) {
   const T = {
     en: {
-      title: '📐 Real-World Paper Size Reference',
+      title: 'Real-World Paper Size Reference',
       subtitle: 'Match your board configuration to the right paper for 1:1 printing',
       isoTable: 'ISO Standard Paper Sizes',
       size: 'Size',
@@ -37,10 +39,10 @@ export default function PaperReference({ lang }: PaperReferenceProps) {
       boardSize: 'Board Size',
       bestPaper: 'Best Paper',
       atScale: 'At Scale',
-      note: '💡 Tip: Print at 100% scale (no fit-to-page). Measure printed square with ruler to verify.',
+      note: 'Tip: Print at 100% scale (no fit-to-page). Measure printed square with ruler to verify.',
     },
     id: {
-      title: '📐 Referensi Ukuran Kertas Dunia Nyata',
+      title: 'Referensi Ukuran Kertas Dunia Nyata',
       subtitle: 'Cocokkan konfigurasi board dengan kertas yang tepat untuk cetak 1:1',
       isoTable: 'Ukuran Kertas Standar ISO',
       size: 'Ukuran',
@@ -70,7 +72,7 @@ export default function PaperReference({ lang }: PaperReferenceProps) {
       boardSize: 'Ukuran Board',
       bestPaper: 'Kertas Terbaik',
       atScale: 'Skala',
-      note: '💡 Tip: Cetak di skala 100% (jangan fit-to-page). Ukur kotak cetakan dengan penggaris untuk verifikasi.',
+      note: 'Tip: Cetak di skala 100% (jangan fit-to-page). Ukur kotak cetakan dengan penggaris untuk verifikasi.',
     },
   };
 
@@ -114,7 +116,7 @@ export default function PaperReference({ lang }: PaperReferenceProps) {
   return (
     <div className="space-y-4 text-xs">
       <div>
-        <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">{t.title}</h3>
+        <h3 className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1"><Ruler className="w-3.5 h-3.5" />{t.title}</h3>
         <p className="text-zinc-500 dark:text-zinc-400 mt-1">{t.subtitle}</p>
       </div>
 
@@ -185,7 +187,7 @@ export default function PaperReference({ lang }: PaperReferenceProps) {
             </tbody>
           </table>
         </div>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-2 italic">{t.note}</p>
+        <p className="text-zinc-500 dark:text-zinc-400 mt-2 italic flex items-center gap-1"><Lightbulb className="w-3 h-3 inline-block" /> {t.note}</p>
       </div>
     </div>
   );

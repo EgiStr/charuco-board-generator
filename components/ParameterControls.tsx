@@ -1,5 +1,6 @@
 'use client';
 
+import { Info } from 'lucide-react';
 import { BoardParams, DICTIONARIES, DictionaryName, PaperSize, Orientation, Unit } from '@/lib/utils';
 
 interface ParameterControlsProps {
@@ -112,7 +113,7 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
           onClick={() => update({ orientation: 'portrait' })}
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             params.orientation === 'portrait'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
               : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
           }`}
         >
@@ -122,7 +123,7 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
           onClick={() => update({ orientation: 'landscape' })}
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             params.orientation === 'landscape'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
               : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
           }`}
         >
@@ -144,7 +145,7 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
             onClick={() => update({ unit: u })}
             className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
               params.unit === u
-                ? 'bg-blue-600 text-white'
+                ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
                 : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
             }`}
           >
@@ -230,9 +231,32 @@ export default function ParameterControls({ params, onChange, lang }: ParameterC
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {t.dictionary}
-          </label>
+          <div className="flex items-center gap-1">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {t.dictionary}
+            </label>
+            <div className="relative group">
+              <button
+                type="button"
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-help"
+                aria-label="What is an ArUco dictionary?"
+                tabIndex={-1}
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 rounded-lg bg-zinc-800 dark:bg-zinc-200 text-xs text-zinc-200 dark:text-zinc-800 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 pointer-events-none">
+                <div className="font-medium mb-1">What is an ArUco Dictionary?</div>
+                <p className="mb-1">The dictionary defines the binary marker patterns used in the ChArUco board.</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li><strong>Marker size</strong> (4×4 to 7×7): Larger markers are more robust to noise but need more space</li>
+                  <li><strong>Count</strong> (50 to 1000): Number of unique markers available</li>
+                  <li><strong>DICT_6X6_250</strong> — Recommended default. Balance of size, count, and error correction</li>
+                  <li><strong>DICT_5X5_250</strong> — Slightly smaller markers, good for high contrast setups</li>
+                </ul>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-800 dark:border-t-zinc-200"></div>
+              </div>
+            </div>
+          </div>
           <select
             value={params.dictionary}
             onChange={(e) => update({ dictionary: e.target.value as DictionaryName })}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Share2, BookOpen } from 'lucide-react';
+import { Share2, BookOpen, Sparkles, FilePen, Ruler, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { BoardParams, getDefaultParams, serializeParams, deserializeParams } from '@/lib/utils';
 import { fillPaper } from '@/lib/templates';
@@ -112,22 +112,25 @@ export default function BoardGenerator() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPureBoard(!pureBoard)}
-              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border ${
                 pureBoard
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                  ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-600'
+                  : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'
               }`}
             >
-              {pureBoard ? '🧹 ' + t.pureBoard : '📝 ' + t.withInfo}
+              {pureBoard
+                ? <><Sparkles className="w-3.5 h-3.5" /> {t.pureBoard}</>
+                : <><FilePen className="w-3.5 h-3.5" /> {t.withInfo}</>
+              }
             </button>
             <button
               onClick={handleFillPaper}
-              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors
-                bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300
-                hover:bg-emerald-200 dark:hover:bg-emerald-800/40"
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border
+                bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-600
+                hover:bg-zinc-300 dark:hover:bg-zinc-600"
               title={lang === 'en' ? 'Fill entire paper (zero margin)' : 'Penuhi seluruh kertas (tanpa margin)'}
             >
-              📐 {lang === 'en' ? 'Fill Paper' : 'Penuhi Kertas'}
+              <Ruler className="w-3.5 h-3.5" /> {lang === 'en' ? 'Fill Paper' : 'Penuhi Kertas'}
             </button>
             <LanguageToggle lang={lang} onToggle={handleLangToggle} />
             <Link
@@ -183,8 +186,9 @@ export default function BoardGenerator() {
                 onClick={() => setShowRef(!showRef)}
                 className="flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors w-full"
               >
-                <span>{showRef ? '\u25BC' : '\u25B6'}</span>
-                {lang === 'en' ? '\uD83D\uDCD0 Real-World Paper Reference' : '\uD83D\uDCD0 Referensi Kertas Dunia Nyata'}
+                {showRef ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                <FileText className="w-3.5 h-3.5" />
+                {lang === 'en' ? 'Real-World Paper Reference' : 'Referensi Kertas Dunia Nyata'}
               </button>
               {showRef && (
                 <div className="mt-3">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Star, RefreshCw, Check, CircleCheck } from 'lucide-react';
 import { BoardParams, PRESETS, PAPER_SIZES } from '@/lib/utils';
 import { ALL_ACCURATE_TEMPLATES, TemplateConfig } from '@/lib/templates';
 
@@ -66,12 +67,18 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
   const [activeCategory, setActiveCategory] = useState<string>('8x6');
 
   const categories = [
-    { id: '8x6', label: lang === 'en' ? '8×6 Corners' : '8×6 Corner' },
+    { id: '8x6', label: lang === 'en'
+      ? <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5" />8×6 Corners</span>
+      : <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5" />8×6 Corner</span>
+    },
     { id: 'A4', label: 'A4' },
     { id: 'A3', label: 'A3' },
     { id: 'A2', label: 'A2' },
     { id: 'A1', label: 'A1' },
-    { id: 'fullbleed', label: lang === 'en' ? '🔄 Full-Bleed' : '🔄 Penuh Kertas' },
+    { id: 'fullbleed', label: lang === 'en'
+      ? <span className="flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />Full-Bleed</span>
+      : <span className="flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />Penuh Kertas</span>
+    },
   ];
 
   const templates = activeCategory === 'all'
@@ -112,10 +119,10 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
               key={preset.name}
               onClick={() => onApply(preset)}
               className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800
-                p-3 text-left hover:border-blue-400 dark:hover:border-blue-500 transition-all
+                p-3 text-left hover:border-zinc-400 dark:hover:border-zinc-500 transition-all
                 hover:shadow-sm group"
             >
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-600 dark:group-hover:text-zinc-400 transition-colors">
                 {preset.name}
               </p>
               <p className="text-[10px] text-zinc-400 mt-1 leading-tight">
@@ -148,7 +155,7 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
               onClick={() => setActiveCategory(cat.id)}
               className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                 activeCategory === cat.id
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
@@ -188,7 +195,7 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
                   <tr
                     key={tmpl.id}
                     className={`hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors ${
-                      isActive ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+                      isActive ? 'bg-zinc-100 dark:bg-zinc-800' : ''
                     }`}
                   >
                     <td className="px-3 py-2 font-semibold text-zinc-800 dark:text-zinc-200">{pSize}</td>
@@ -199,18 +206,20 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
                     <td className="px-3 py-2 text-zinc-500 dark:text-zinc-400 font-mono text-[10px]">{tmpl.dictionary.replace('DICT_', '')}</td>
                     <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{tmpl.boardWidthMm}×{tmpl.boardHeightMm}</td>
                     <td className="px-3 py-2">
-                      <span className="text-green-600 dark:text-green-400 font-medium" title="Verified 1:1 scale">✅</span>
+                      <span title="Verified 1:1 scale">
+                        <CircleCheck className="w-4 h-4 text-green-500" />
+                      </span>
                     </td>
                     <td className="px-3 py-2">
                       <button
                         onClick={() => applyTemplate(tmpl)}
                         className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                           isActive
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-blue-500 hover:text-white'
+                            ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900'
+                            : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-800 hover:text-white dark:hover:bg-zinc-200 dark:hover:text-zinc-900'
                         }`}
                       >
-                        {isActive ? '✓ ' : ''}{t.apply}
+                        <span className="flex items-center gap-1">{isActive ? <><Check className="w-3 h-3" />{t.apply}</> : t.apply}</span>
                       </button>
                     </td>
                   </tr>
@@ -226,8 +235,9 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
           </p>
         )}
 
-        <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-          ✅ All templates verified: 1:1 scale on their paper size — guaranteed accurate for real-world calibration.
+        <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+          <CircleCheck className="w-3.5 h-3.5" />
+          All templates verified: 1:1 scale on their paper size — guaranteed accurate for real-world calibration.
         </p>
       </div>
     </div>
