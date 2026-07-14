@@ -42,7 +42,7 @@ export function generateSvg(params: BoardParams, pureBoard?: boolean): string {
   const totalH = pureBoard ? boardH : boardH + margin + 12;
 
   // Root
-  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${boardW}" height="${totalH}" viewBox="0 0 ${boardW} ${totalH}">`);
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${boardW}mm" height="${totalH}mm" viewBox="0 0 ${boardW} ${totalH}">`);
 
   // Background (full board area — pure white)
   parts.push(`  <rect x="0" y="0" width="${boardW}" height="${totalH}" fill="#ffffff"/>`);

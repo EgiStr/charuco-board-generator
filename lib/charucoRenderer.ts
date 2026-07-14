@@ -130,7 +130,7 @@ export function renderCharucoBoard(
   const marginPx = margin * scale;
 
   const dict = getDictionary(dictName);
-  const cellSize = Math.max(1, Math.floor(markerPx / (dict.markerSize + 2)));
+  const cellSize = Math.max(1, markerPx / (dict.markerSize + 2));
 
   // ── Accuracy — ALWAYS theoretical DPI-based, never screen-fit ──
   // For 'print' mode: pxPerMm = dpi / 25.4

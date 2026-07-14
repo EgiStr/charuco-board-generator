@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getPaperSize, PAPER_SIZES } from '../utils';
+import { generateSvg } from '../svgGenerator';
 
 describe('ISO paper size constants', () => {
   it('A4 = 210×297mm', () => {
@@ -94,5 +95,14 @@ describe('board real-world verification', () => {
     // 13×9 at 25mm + 5mm margin = 335×235 = 78725 mm² > A4
     const tooBig = (13 * 25 + 10) * (9 * 25 + 10);
     expect(tooBig).toBeGreaterThan(maxArea);
+  });
+});
+
+describe('SVG output physical units', () => {
+  it('SVG width/height should have mm unit suffix for correct print size', () => {
+    const params = { squaresX: 9, squaresY: 7, squareLength: 30, markerLength: 18, margin: 0, dictionary: 'DICT_6X6_250' } as any;
+    const svg = generateSvg(params, true);
+    expect(svg).toContain('width="270mm"');
+    expect(svg).toContain('height="210mm"');
   });
 });

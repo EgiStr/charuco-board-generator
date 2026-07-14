@@ -107,4 +107,17 @@ describe('300 DPI physical constants', () => {
   it('72 DPI (screen) = 2.835 px/mm', () => {
     expect(72 / 25.4).toBeCloseTo(2.83465, 3);
   });
+
+  it('marker cell size should preserve precision for exact marker dimensions', () => {
+    const dpi = 300;
+    const markerLength = 24; // mm
+    const markerSize = 6; // DICT_6X6_250 inner bits
+    const scale = dpi / 25.4;
+    const markerPx = markerLength * scale;
+    const cellSizeFloat = markerPx / (markerSize + 2); // NO Math.floor
+    const actualMarkerPx = cellSizeFloat * (markerSize + 2);
+    expect(actualMarkerPx).toBeCloseTo(markerPx, 5); // Should be exact: 283.4646
+    expect(markerPx).toBeCloseTo(283.4646, 2);
+    expect(cellSizeFloat).toBeCloseTo(35.4331, 3);
+  });
 });

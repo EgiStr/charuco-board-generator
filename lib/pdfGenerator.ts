@@ -91,8 +91,8 @@ function getPdfFormat(
 /**
  * Download a PDF file.
  */
-export function downloadPdf(params: BoardParams, pureBoard?: boolean): void {
-  generatePdf(params, pureBoard).then((blob) => {
+export function downloadPdf(params: BoardParams, pureBoard?: boolean): Promise<void> {
+  return generatePdf(params, pureBoard).then((blob) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -108,32 +108,34 @@ export function downloadPdf(params: BoardParams, pureBoard?: boolean): void {
 /**
  * Download a PNG image at 300 DPI.
  */
-export function downloadPng(params: BoardParams, pureBoard?: boolean): void {
-  const PRINT_DPI = 300;
-  const pxPerMm = PRINT_DPI / 25.4;
-  const { squaresX, squaresY, squareLength, margin } = params;
-  const boardWidthMm = squaresX * squareLength + 2 * margin;
-  const boardHeightMm = squaresY * squareLength + 2 * margin;
+export function downloadPng(params: BoardParams, pureBoard?: boolean): Promise<void> {
+  return Promise.resolve().then(() => {
+    const PRINT_DPI = 300;
+    const pxPerMm = PRINT_DPI / 25.4;
+    const { squaresX, squaresY, squareLength, margin } = params;
+    const boardWidthMm = squaresX * squareLength + 2 * margin;
+    const boardHeightMm = squaresY * squareLength + 2 * margin;
 
-  const result = renderCharucoBoard(params, {
-    canvasWidth: Math.ceil(boardWidthMm * pxPerMm),
-    canvasHeight: Math.ceil(boardHeightMm * pxPerMm),
-    dpi: PRINT_DPI,
-    backgroundColor: '#ffffff',
-    showInfo: !pureBoard,
-    showScale: !pureBoard,
-    pureBoard,
-    renderMode: 'print',
+    const result = renderCharucoBoard(params, {
+      canvasWidth: Math.ceil(boardWidthMm * pxPerMm),
+      canvasHeight: Math.ceil(boardHeightMm * pxPerMm),
+      dpi: PRINT_DPI,
+      backgroundColor: '#ffffff',
+      showInfo: !pureBoard,
+      showScale: !pureBoard,
+      pureBoard,
+      renderMode: 'print',
+    });
+
+    const url = result.canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    const dictShort = params.dictionary.replace('DICT_', '');
+    a.download = `charuco-${params.squaresX}x${params.squaresY}-${dictShort}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   });
-
-  const url = result.canvas.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = url;
-  const dictShort = params.dictionary.replace('DICT_', '');
-  a.download = `charuco-${params.squaresX}x${params.squaresY}-${dictShort}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
 }
 
 /**
@@ -143,19 +145,21 @@ export function downloadPng(params: BoardParams, pureBoard?: boolean): void {
  * produces actual SVG elements (<rect> for every black square and
  * marker bit) that are fully scalable.
  */
-export function downloadSvg(params: BoardParams, pureBoard?: boolean): void {
-  const svgContent = generateSvg(params, pureBoard);
+export function downloadSvg(params: BoardParams, pureBoard?: boolean): Promise<void> {
+  return Promise.resolve().then(() => {
+    const svgContent = generateSvg(params, pureBoard);
 
-  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const dictShort = params.dictionary.replace('DICT_', '');
-  a.download = `charuco-${params.squaresX}x${params.squaresY}-${dictShort}.svg`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dictShort = params.dictionary.replace('DICT_', '');
+    a.download = `charuco-${params.squaresX}x${params.squaresY}-${dictShort}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 }
 
 /**
@@ -165,8 +169,8 @@ export function downloadSvg(params: BoardParams, pureBoard?: boolean): void {
  * Opens the PDF in a new tab where the user presses Ctrl+P (or Cmd+P).
  * Falls back to downloading the PDF if the pop-up is blocked.
  */
-export function printBoard(params: BoardParams, pureBoard?: boolean): void {
-  generatePdf(params, pureBoard).then((blob) => {
+export function printBoard(params: BoardParams, pureBoard?: boolean): Promise<void> {
+  return generatePdf(params, pureBoard).then((blob) => {
     const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank');
     if (!w) {

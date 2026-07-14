@@ -36,49 +36,38 @@ export default function DownloadOptions({ params, lang, pureBoard }: DownloadOpt
 
   const handlePdf = () => {
     setBusy('pdf');
-    setTimeout(() => {
-      try {
-        downloadPdf(params, pureBoard);
-      } catch (err) {
+    downloadPdf(params, pureBoard)
+      .catch((err) => {
         console.error('PDF error:', err);
         alert('Failed to generate PDF. Check console for details.');
-      }
-      setBusy(null);
-    }, 100);
+      })
+      .finally(() => setBusy(null));
   };
 
   const handlePng = () => {
     setBusy('png');
-    setTimeout(() => {
-      try {
-        downloadPng(params, pureBoard);
-      } catch (err) {
+    downloadPng(params, pureBoard)
+      .catch((err) => {
         console.error('PNG error:', err);
         alert('Failed to generate PNG.');
-      }
-      setBusy(null);
-    }, 100);
+      })
+      .finally(() => setBusy(null));
   };
 
   const handleSvg = () => {
     setBusy('svg');
-    setTimeout(() => {
-      try {
-        downloadSvg(params, pureBoard);
-      } catch (err) {
+    downloadSvg(params, pureBoard)
+      .catch((err) => {
         console.error('SVG error:', err);
         alert('Failed to generate SVG.');
-      }
-      setBusy(null);
-    }, 100);
+      })
+      .finally(() => setBusy(null));
   };
 
   const handlePrint = () => {
-    try {
-      printBoard(params, pureBoard);
-    } catch (err) {
+    printBoard(params, pureBoard).catch((err) => {
       console.error('Print error:', err);
-    }
+    });
   };
 
   const btnClass = (type: string) =>
