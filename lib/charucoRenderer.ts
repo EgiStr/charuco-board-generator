@@ -29,6 +29,11 @@ export interface RenderOptions {
   showScale?: boolean;
   /** DPI for scaling (default: 72 for screen, 300 for print) */
   dpi?: number;
+  /**
+   * Pure board mode: NO info, NO scale, pure B&W everywhere.
+   * Overrides showInfo/showScale/backgroundColor when true.
+   */
+  pureBoard?: boolean;
 }
 
 export interface RenderResult {
@@ -60,11 +65,17 @@ export function renderCharucoBoard(
   const {
     canvasWidth,
     canvasHeight,
-    backgroundColor = '#ffffff',
-    showInfo = true,
-    showScale = true,
+    backgroundColor: bgColor = '#ffffff',
+    showInfo: optShowInfo = true,
+    showScale: optShowScale = true,
     dpi = 72,
+    pureBoard = false,
   } = options;
+
+  // PureBoard overrides
+  const showInfo = pureBoard ? false : optShowInfo;
+  const showScale = pureBoard ? false : optShowScale;
+  const backgroundColor = pureBoard ? '#ffffff' : bgColor;
 
   const canvas = document.createElement('canvas');
   canvas.width = canvasWidth;
@@ -110,9 +121,12 @@ export function renderCharucoBoard(
   ctx.fillStyle = backgroundColor;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-  // ── Margin area (pure white — was grey before) ─────────────────────────
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(offsetX, offsetY, boardPxW, boardPxH);
+  // ── Margin area (pure white) ───────────────────────────────────────────
+  // In pureBoard mode we skip the margin fill for completely pure B&W
+  if (!pureBoard) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(offsetX, offsetY, boardPxW, boardPxH);
+  }
 
   // ── Checkerboard ───────────────────────────────────────────────────────
   // Disable anti-aliasing for crisp black/white edges
@@ -280,9 +294,8 @@ export function renderPureBW(
 ): RenderResult {
   return renderCharucoBoard(params, {
     ...options,
+    pureBoard: true,
     backgroundColor: '#ffffff',
-    showInfo: options.showInfo ?? true,
-    showScale: options.showScale ?? true,
   });
 }
 

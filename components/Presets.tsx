@@ -36,6 +36,8 @@ const T = {
     board: 'Board',
     corners: 'Corners',
     square: 'Sq',
+    marker: 'Marker',
+    dict: 'Dict',
     boardSize: 'Size',
     fit: 'Fit',
     fitTip8x6: 'All 8×6 templates use the same board dimensions (9×7 squares) with square size optimized for each paper.',
@@ -50,6 +52,8 @@ const T = {
     board: 'Board',
     corners: 'Corner',
     square: 'Ktk',
+    marker: 'Marker',
+    dict: 'Dict',
     boardSize: 'Ukuran',
     fit: 'Muat',
     fitTip8x6: 'Semua template 8×6 menggunakan dimensi board sama (9×7 kotak) dengan ukuran kotak dioptimalkan untuk setiap kertas.',
@@ -86,7 +90,9 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
       squaresX: tmpl.squaresX,
       squaresY: tmpl.squaresY,
       squareLength: tmpl.squareLength,
+      markerLength: tmpl.markerLength,
       margin: tmpl.margin,
+      dictionary: tmpl.dictionary as BoardParams['dictionary'],
     });
   }
 
@@ -157,6 +163,8 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
                 <th className="px-3 py-2 font-medium">{t.board}</th>
                 <th className="px-3 py-2 font-medium">{t.corners}</th>
                 <th className="px-3 py-2 font-medium">{t.square}</th>
+                <th className="px-3 py-2 font-medium">{t.marker}</th>
+                <th className="px-3 py-2 font-medium">{t.dict}</th>
                 <th className="px-3 py-2 font-medium">{t.boardSize}</th>
                 <th className="px-3 py-2 font-medium">{t.fit}</th>
                 <th className="px-3 py-2"></th>
@@ -191,6 +199,8 @@ export default function Presets({ params, onApply, lang }: PresetsProps) {
                     <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">{tmpl.squaresX}×{tmpl.squaresY}</td>
                     <td className="px-3 py-2 text-zinc-500 dark:text-zinc-400">{tmpl.internalCorners}</td>
                     <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{tmpl.squareLength}mm</td>
+                    <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{tmpl.markerLength}mm</td>
+                    <td className="px-3 py-2 text-zinc-500 dark:text-zinc-400 font-mono text-[10px]">{tmpl.dictionary.replace('DICT_', '')}</td>
                     <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{tmpl.boardWidthMm}×{tmpl.boardHeightMm}</td>
                     <td className="px-3 py-2">
                       {fits

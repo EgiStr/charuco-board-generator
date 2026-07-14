@@ -17,6 +17,7 @@ export default function BoardGenerator() {
   const [lang, setLang] = useState<'en' | 'id'>('en');
   const [copied, setCopied] = useState(false);
   const [showRef, setShowRef] = useState(false);
+  const [pureBoard, setPureBoard] = useState(true); // default true = pure board
 
   // Load params from URL on mount
   useEffect(() => {
@@ -65,6 +66,8 @@ export default function BoardGenerator() {
       copied: 'Copied!',
       calibration: 'Calibration Guide',
       footer: 'ChArUco Board Generator — OpenCV-compatible',
+      pureBoard: 'Pure Board',
+      withInfo: 'With Info',
     },
     id: {
       title: 'Generator Board ChArUco',
@@ -73,6 +76,8 @@ export default function BoardGenerator() {
       copied: 'Tersalin!',
       calibration: 'Panduan Kalibrasi',
       footer: 'Generator Board ChArUco — Kompatibel dengan OpenCV',
+      pureBoard: 'Pure Board',
+      withInfo: 'Dengan Info',
     },
   };
 
@@ -92,6 +97,16 @@ export default function BoardGenerator() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPureBoard(!pureBoard)}
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                pureBoard
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+              }`}
+            >
+              {pureBoard ? '🧹 ' + t.pureBoard : '📝 ' + t.withInfo}
+            </button>
             <LanguageToggle lang={lang} onToggle={handleLangToggle} />
             <Link
               href="/calibration"
@@ -134,10 +149,10 @@ export default function BoardGenerator() {
 
           {/* Preview + Download */}
           <div className="lg:col-span-2 space-y-4">
-            <BoardPreview params={params} lang={lang} className="h-[400px] sm:h-[500px] lg:h-[600px]" />
+            <BoardPreview params={params} lang={lang} className="h-[400px] sm:h-[500px] lg:h-[600px]" pureBoard={pureBoard} />
 
             <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4">
-              <DownloadOptions params={params} lang={lang} />
+              <DownloadOptions params={params} lang={lang} pureBoard={pureBoard} />
             </div>
 
             {/* Real-World Paper Reference (collapsible) */}

@@ -12,6 +12,8 @@ export interface TemplateConfig {
   squaresX: number;        // columns
   squaresY: number;        // rows
   squareLength: number;    // mm
+  markerLength: number;    // auto-calc: Math.round(squareLength * 0.55)
+  dictionary: string;      // per-template
   margin: number;          // mm
   boardWidthMm: number;    // calculated
   boardHeightMm: number;   // calculated
@@ -19,86 +21,112 @@ export interface TemplateConfig {
   category: string;        // "8x6", "A4", "A3", "A2", "A1"
 }
 
+/** Helper: choose dictionary based on squareLength for non-8x6 templates. */
+function dictForSquare(sq: number, ranges: [number, number, string][]): string {
+  for (const [lo, hi, dict] of ranges) {
+    if (sq >= lo && sq <= hi) return dict;
+  }
+  return 'DICT_6X6_250'; // fallback
+}
+
+const A4_RANGES: [number, number, string][] = [
+  [20, 30, 'DICT_6X6_250'],
+  [35, 45, 'DICT_5X5_250'],
+  [50, 60, 'DICT_4X4_250'],
+];
+const A3_RANGES: [number, number, string][] = [
+  [25, 40, 'DICT_6X6_250'],
+  [45, 60, 'DICT_5X5_250'],
+];
+const A2_RANGES: [number, number, string][] = [
+  [30, 50, 'DICT_6X6_250'],
+  [55, 80, 'DICT_5X5_250'],
+  [80, 100, 'DICT_4X4_250'],
+];
+const A1_RANGES: [number, number, string][] = [
+  [30, 60, 'DICT_6X6_250'],
+  [75, 100, 'DICT_5X5_250'],
+];
+
+/** Attach markerLength + dictionary + computed fields to a raw template. */
+function enrich(t: {
+  id: string;
+  paperSize: string;
+  orientation: string;
+  squaresX: number;
+  squaresY: number;
+  squareLength: number;
+  margin: number;
+  category: string;
+  internalCorners: string;
+}, dict: string): TemplateConfig {
+  return {
+    ...t,
+    markerLength: Math.round(t.squareLength * 0.55),
+    dictionary: dict,
+    boardWidthMm: t.squaresX * t.squareLength + 2 * t.margin,
+    boardHeightMm: t.squaresY * t.squareLength + 2 * t.margin,
+    orientation: t.orientation as 'portrait' | 'landscape',
+    paperSize: t.paperSize,
+  } as TemplateConfig;
+}
+
 // ── 8×6 Internal Corners (9×7 squares) — Standard collection ──
+// All use DICT_6X6_250
 const EIGHT_BY_SIX: TemplateConfig[] = [
-  { id: 'a4-25-9x7', paperSize: 'A4', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 25, margin: 10, category: '8x6' },
-  { id: 'a3-35-9x7', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 35, margin: 10, category: '8x6' },
-  { id: 'a3-40-9x7', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 40, margin: 10, category: '8x6' },
-  { id: 'a2-55-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 55, margin: 10, category: '8x6' },
-  { id: 'a2-60-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 60, margin: 10, category: '8x6' },
-  { id: 'a1-75-9x7', paperSize: 'A1', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 75, margin: 10, category: '8x6' },
-  { id: 'a1-80-9x7', paperSize: 'A1', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 80, margin: 10, category: '8x6' },
-].map(c => ({
-  ...c,
-  boardWidthMm: c.squaresX * c.squareLength + 2 * c.margin,
-  boardHeightMm: c.squaresY * c.squareLength + 2 * c.margin,
-  internalCorners: '8×6',
-} as TemplateConfig));
+  { id: 'a4-25-9x7', paperSize: 'A4', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 25, margin: 10, category: '8x6', internalCorners: '8×6' },
+  { id: 'a3-35-9x7', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 35, margin: 10, category: '8x6', internalCorners: '8×6' },
+  { id: 'a3-40-9x7', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 40, margin: 10, category: '8x6', internalCorners: '8×6' },
+  { id: 'a2-55-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 55, margin: 10, category: '8x6', internalCorners: '8×6' },
+  { id: 'a2-60-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 60, margin: 10, category: '8x6', internalCorners: '8×6' },
+  { id: 'a1-75-9x7', paperSize: 'A1', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 75, margin: 10, category: '8x6', internalCorners: '8×6' },
+  { id: 'a1-80-9x7', paperSize: 'A1', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 80, margin: 10, category: '8x6', internalCorners: '8×6' },
+].map(c => enrich(c, 'DICT_6X6_250'));
 
 // ── A4 Templates (210×297mm) ──
 const A4_TEMPLATES: TemplateConfig[] = [
-  { id: 'a4-20-13x9', paperSize: 'A4', orientation: 'landscape', squaresX: 14, squaresY: 10, squareLength: 20, margin: 5, category: 'A4' },
-  { id: 'a4-25-10x7', paperSize: 'A4', orientation: 'landscape', squaresX: 11, squaresY: 8, squareLength: 25, margin: 5, category: 'A4' },
-  { id: 'a4-25-9x7', paperSize: 'A4', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 25, margin: 10, category: 'A4' },
-  { id: 'a4-30-8x6', paperSize: 'A4', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 30, margin: 3, category: 'A4' },
-  { id: 'a4-35-7x4', paperSize: 'A4', orientation: 'portrait', squaresX: 8, squaresY: 5, squareLength: 35, margin: 5, category: 'A4' },
-  { id: 'a4-40-6x4', paperSize: 'A4', orientation: 'portrait', squaresX: 7, squaresY: 5, squareLength: 40, margin: 5, category: 'A4' },
-  { id: 'a4-50-5x3', paperSize: 'A4', orientation: 'portrait', squaresX: 6, squaresY: 4, squareLength: 50, margin: 5, category: 'A4' },
-  { id: 'a4-60-4x3', paperSize: 'A4', orientation: 'portrait', squaresX: 5, squaresY: 4, squareLength: 60, margin: 5, category: 'A4' },
-].map(c => ({
-  ...c,
-  boardWidthMm: c.squaresX * c.squareLength + 2 * c.margin,
-  boardHeightMm: c.squaresY * c.squareLength + 2 * c.margin,
-  internalCorners: `${c.squaresX - 1}×${c.squaresY - 1}`,
-} as TemplateConfig));
+  // NOTE: a4-25-9x7 removed — it's already in EIGHT_BY_SIX
+  { id: 'a4-20-13x9', paperSize: 'A4', orientation: 'landscape', squaresX: 14, squaresY: 10, squareLength: 20, margin: 5, category: 'A4', internalCorners: '13×9' },
+  { id: 'a4-25-10x7', paperSize: 'A4', orientation: 'landscape', squaresX: 11, squaresY: 8, squareLength: 25, margin: 5, category: 'A4', internalCorners: '10×7' },
+  { id: 'a4-30-8x6',  paperSize: 'A4', orientation: 'landscape', squaresX: 9,  squaresY: 7, squareLength: 30, margin: 3, category: 'A4', internalCorners: '8×6' },
+  { id: 'a4-35-7x4',  paperSize: 'A4', orientation: 'portrait',  squaresX: 8,  squaresY: 5, squareLength: 35, margin: 5, category: 'A4', internalCorners: '7×4' },
+  { id: 'a4-40-6x4',  paperSize: 'A4', orientation: 'portrait',  squaresX: 7,  squaresY: 5, squareLength: 40, margin: 5, category: 'A4', internalCorners: '6×4' },
+  { id: 'a4-50-5x3',  paperSize: 'A4', orientation: 'portrait',  squaresX: 6,  squaresY: 4, squareLength: 50, margin: 5, category: 'A4', internalCorners: '5×3' },
+  { id: 'a4-60-4x3',  paperSize: 'A4', orientation: 'portrait',  squaresX: 5,  squaresY: 4, squareLength: 60, margin: 5, category: 'A4', internalCorners: '4×3' },
+].map(c => enrich(c, dictForSquare(c.squareLength, A4_RANGES)));
 
 // ── A3 Templates (297×420mm) ──
 const A3_TEMPLATES: TemplateConfig[] = [
-  { id: 'a3-25-15x10', paperSize: 'A3', orientation: 'landscape', squaresX: 16, squaresY: 11, squareLength: 25, margin: 5, category: 'A3' },
-  { id: 'a3-30-12x8', paperSize: 'A3', orientation: 'landscape', squaresX: 13, squaresY: 9, squareLength: 30, margin: 5, category: 'A3' },
-  { id: 'a3-35-9x7', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 35, margin: 10, category: 'A3' },
-  { id: 'a3-40-8x6', paperSize: 'A3', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 40, margin: 10, category: 'A3' },
-  { id: 'a3-45-7x5', paperSize: 'A3', orientation: 'landscape', squaresX: 8, squaresY: 6, squareLength: 45, margin: 5, category: 'A3' },
-  { id: 'a3-50-6x4', paperSize: 'A3', orientation: 'landscape', squaresX: 8, squaresY: 5, squareLength: 50, margin: 10, category: 'A3' },
-  { id: 'a3-60-5x3', paperSize: 'A3', orientation: 'landscape', squaresX: 6, squaresY: 4, squareLength: 60, margin: 5, category: 'A3' },
-].map(c => ({
-  ...c,
-  boardWidthMm: c.squaresX * c.squareLength + 2 * c.margin,
-  boardHeightMm: c.squaresY * c.squareLength + 2 * c.margin,
-  internalCorners: `${c.squaresX - 1}×${c.squaresY - 1}`,
-} as TemplateConfig));
+  { id: 'a3-25-15x10', paperSize: 'A3', orientation: 'landscape', squaresX: 16, squaresY: 11, squareLength: 25, margin: 5,  category: 'A3', internalCorners: '15×10' },
+  { id: 'a3-30-12x8',  paperSize: 'A3', orientation: 'landscape', squaresX: 13, squaresY: 9,  squareLength: 30, margin: 5,  category: 'A3', internalCorners: '12×8' },
+  { id: 'a3-35-9x7',   paperSize: 'A3', orientation: 'landscape', squaresX: 9,  squaresY: 7,  squareLength: 35, margin: 10, category: 'A3', internalCorners: '8×6' },
+  { id: 'a3-40-8x6',   paperSize: 'A3', orientation: 'landscape', squaresX: 9,  squaresY: 7,  squareLength: 40, margin: 10, category: 'A3', internalCorners: '8×6' },
+  { id: 'a3-45-7x5',   paperSize: 'A3', orientation: 'landscape', squaresX: 8,  squaresY: 6,  squareLength: 45, margin: 5,  category: 'A3', internalCorners: '7×5' },
+  { id: 'a3-50-6x4',   paperSize: 'A3', orientation: 'landscape', squaresX: 8,  squaresY: 5,  squareLength: 50, margin: 10, category: 'A3', internalCorners: '7×4' },
+  { id: 'a3-60-5x3',   paperSize: 'A3', orientation: 'landscape', squaresX: 6,  squaresY: 4,  squareLength: 60, margin: 5,  category: 'A3', internalCorners: '5×3' },
+].map(c => enrich(c, dictForSquare(c.squareLength, A3_RANGES)));
 
 // ── A2 Templates (420×594mm) ──
 const A2_TEMPLATES: TemplateConfig[] = [
-  { id: 'a2-30-18x13', paperSize: 'A2', orientation: 'landscape', squaresX: 19, squaresY: 14, squareLength: 30, margin: 5, category: 'A2' },
-  { id: 'a2-40-12x9', paperSize: 'A2', orientation: 'landscape', squaresX: 13, squaresY: 10, squareLength: 40, margin: 5, category: 'A2' },
-  { id: 'a2-50-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 10, squaresY: 8, squareLength: 50, margin: 5, category: 'A2' },
-  { id: 'a2-55-9x7', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 55, margin: 10, category: 'A2' },
-  { id: 'a2-60-8x6', paperSize: 'A2', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 60, margin: 10, category: 'A2' },
-  { id: 'a2-70-7x4', paperSize: 'A2', orientation: 'landscape', squaresX: 7, squaresY: 5, squareLength: 70, margin: 10, category: 'A2' },
-  { id: 'a2-80-6x4', paperSize: 'A2', orientation: 'landscape', squaresX: 7, squaresY: 5, squareLength: 80, margin: 5, category: 'A2' },
-  { id: 'a2-100-5x3', paperSize: 'A2', orientation: 'landscape', squaresX: 6, squaresY: 4, squareLength: 100, margin: 5, category: 'A2' },
-].map(c => ({
-  ...c,
-  boardWidthMm: c.squaresX * c.squareLength + 2 * c.margin,
-  boardHeightMm: c.squaresY * c.squareLength + 2 * c.margin,
-  internalCorners: `${c.squaresX - 1}×${c.squaresY - 1}`,
-} as TemplateConfig));
+  { id: 'a2-30-18x13', paperSize: 'A2', orientation: 'landscape', squaresX: 19, squaresY: 14, squareLength: 30, margin: 5,  category: 'A2', internalCorners: '18×13' },
+  { id: 'a2-40-12x9',  paperSize: 'A2', orientation: 'landscape', squaresX: 13, squaresY: 10, squareLength: 40, margin: 5,  category: 'A2', internalCorners: '12×9' },
+  { id: 'a2-50-9x7',   paperSize: 'A2', orientation: 'landscape', squaresX: 10, squaresY: 8,  squareLength: 50, margin: 5,  category: 'A2', internalCorners: '9×7' },
+  { id: 'a2-55-9x7',   paperSize: 'A2', orientation: 'landscape', squaresX: 9,  squaresY: 7,  squareLength: 55, margin: 10, category: 'A2', internalCorners: '8×6' },
+  { id: 'a2-60-8x6',   paperSize: 'A2', orientation: 'landscape', squaresX: 9,  squaresY: 7,  squareLength: 60, margin: 10, category: 'A2', internalCorners: '8×6' },
+  { id: 'a2-70-7x4',   paperSize: 'A2', orientation: 'landscape', squaresX: 7,  squaresY: 5,  squareLength: 70, margin: 10, category: 'A2', internalCorners: '6×4' },
+  { id: 'a2-80-6x4',   paperSize: 'A2', orientation: 'landscape', squaresX: 7,  squaresY: 5,  squareLength: 80, margin: 5,  category: 'A2', internalCorners: '6×4' },
+  { id: 'a2-100-5x3',  paperSize: 'A2', orientation: 'landscape', squaresX: 6,  squaresY: 4,  squareLength: 100, margin: 5, category: 'A2', internalCorners: '5×3' },
+].map(c => enrich(c, dictForSquare(c.squareLength, A2_RANGES)));
 
 // ── A1 Templates (594×841mm) ──
 const A1_TEMPLATES: TemplateConfig[] = [
-  { id: 'a1-30-27x18', paperSize: 'A1', orientation: 'landscape', squaresX: 28, squaresY: 19, squareLength: 30, margin: 5, category: 'A1' },
-  { id: 'a1-45-17x12', paperSize: 'A1', orientation: 'landscape', squaresX: 18, squaresY: 13, squareLength: 45, margin: 5, category: 'A1' },
-  { id: 'a1-60-13x8', paperSize: 'A1', orientation: 'landscape', squaresX: 14, squaresY: 9, squareLength: 60, margin: 5, category: 'A1' },
-  { id: 'a1-75-9x7', paperSize: 'A1', orientation: 'landscape', squaresX: 10, squaresY: 7, squareLength: 75, margin: 10, category: 'A1' },
-  { id: 'a1-80-8x6', paperSize: 'A1', orientation: 'landscape', squaresX: 9, squaresY: 7, squareLength: 80, margin: 10, category: 'A1' },
-  { id: 'a1-100-6x4', paperSize: 'A1', orientation: 'landscape', squaresX: 7, squaresY: 5, squareLength: 100, margin: 10, category: 'A1' },
-].map(c => ({
-  ...c,
-  boardWidthMm: c.squaresX * c.squareLength + 2 * c.margin,
-  boardHeightMm: c.squaresY * c.squareLength + 2 * c.margin,
-  internalCorners: `${c.squaresX - 1}×${c.squaresY - 1}`,
-} as TemplateConfig));
+  { id: 'a1-30-27x18', paperSize: 'A1', orientation: 'landscape', squaresX: 28, squaresY: 19, squareLength: 30, margin: 5,  category: 'A1', internalCorners: '27×18' },
+  { id: 'a1-45-17x12', paperSize: 'A1', orientation: 'landscape', squaresX: 18, squaresY: 13, squareLength: 45, margin: 5,  category: 'A1', internalCorners: '17×12' },
+  { id: 'a1-60-13x8',  paperSize: 'A1', orientation: 'landscape', squaresX: 14, squaresY: 9,  squareLength: 60, margin: 5,  category: 'A1', internalCorners: '13×8' },
+  { id: 'a1-75-9x7',   paperSize: 'A1', orientation: 'landscape', squaresX: 10, squaresY: 7,  squareLength: 75, margin: 10, category: 'A1', internalCorners: '9×7' },
+  { id: 'a1-80-8x6',   paperSize: 'A1', orientation: 'landscape', squaresX: 9,  squaresY: 7,  squareLength: 80, margin: 10, category: 'A1', internalCorners: '8×6' },
+  { id: 'a1-100-6x4',  paperSize: 'A1', orientation: 'landscape', squaresX: 7,  squaresY: 5,  squareLength: 100, margin: 10, category: 'A1', internalCorners: '6×4' },
+].map(c => enrich(c, dictForSquare(c.squareLength, A1_RANGES)));
 
 // ── Combine all templates ──
 export const ALL_TEMPLATES: TemplateConfig[] = [

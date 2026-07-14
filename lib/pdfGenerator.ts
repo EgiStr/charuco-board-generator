@@ -20,7 +20,7 @@ function getPageDimensions(params: BoardParams): PaperDimensions {
 /**
  * Generate a PDF blob of the ChArUco board.
  */
-export async function generatePdf(params: BoardParams): Promise<Blob> {
+export async function generatePdf(params: BoardParams, pureBoard?: boolean): Promise<Blob> {
   const pageDims = getPageDimensions(params);
   const PRINT_DPI = 300;
   const pxPerMm = PRINT_DPI / 25.4;
@@ -52,8 +52,9 @@ export async function generatePdf(params: BoardParams): Promise<Blob> {
     canvasHeight,
     dpi: PRINT_DPI,
     backgroundColor: '#ffffff',
-    showInfo: true,
-    showScale: true,
+    showInfo: !pureBoard,
+    showScale: !pureBoard,
+    pureBoard,
   });
 
   // Create PDF
@@ -89,8 +90,8 @@ function getPdfFormat(
 /**
  * Download a PDF file.
  */
-export function downloadPdf(params: BoardParams): void {
-  generatePdf(params).then((blob) => {
+export function downloadPdf(params: BoardParams, pureBoard?: boolean): void {
+  generatePdf(params, pureBoard).then((blob) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -106,7 +107,7 @@ export function downloadPdf(params: BoardParams): void {
 /**
  * Download a PNG image at 300 DPI.
  */
-export function downloadPng(params: BoardParams): void {
+export function downloadPng(params: BoardParams, pureBoard?: boolean): void {
   const PRINT_DPI = 300;
   const pxPerMm = PRINT_DPI / 25.4;
   const { squaresX, squaresY, squareLength, margin } = params;
@@ -118,8 +119,9 @@ export function downloadPng(params: BoardParams): void {
     canvasHeight: Math.ceil(boardHeightMm * pxPerMm),
     dpi: PRINT_DPI,
     backgroundColor: '#ffffff',
-    showInfo: true,
-    showScale: true,
+    showInfo: !pureBoard,
+    showScale: !pureBoard,
+    pureBoard,
   });
 
   const url = result.canvas.toDataURL('image/png');
@@ -139,8 +141,8 @@ export function downloadPng(params: BoardParams): void {
  * produces actual SVG elements (<rect> for every black square and
  * marker bit) that are fully scalable.
  */
-export function downloadSvg(params: BoardParams): void {
-  const svgContent = generateSvg(params);
+export function downloadSvg(params: BoardParams, pureBoard?: boolean): void {
+  const svgContent = generateSvg(params, pureBoard);
 
   const blob = new Blob([svgContent], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
@@ -161,8 +163,8 @@ export function downloadSvg(params: BoardParams): void {
  * Opens the PDF in a new tab where the user presses Ctrl+P (or Cmd+P).
  * Falls back to downloading the PDF if the pop-up is blocked.
  */
-export function printBoard(params: BoardParams): void {
-  generatePdf(params).then((blob) => {
+export function printBoard(params: BoardParams, pureBoard?: boolean): void {
+  generatePdf(params, pureBoard).then((blob) => {
     const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank');
     if (!w) {

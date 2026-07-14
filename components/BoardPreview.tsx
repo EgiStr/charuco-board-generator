@@ -9,6 +9,7 @@ interface BoardPreviewProps {
   params: BoardParams;
   lang?: 'en' | 'id';
   className?: string;
+  pureBoard?: boolean;
 }
 
 const PRINT_DPI = 300;
@@ -36,7 +37,7 @@ function scaleNeededFor(boardW: number, boardH: number, pageW: number, pageH: nu
   return s < 1 ? s * 100 : null;
 }
 
-export default function BoardPreview({ params, lang = 'en', className = '' }: BoardPreviewProps) {
+export default function BoardPreview({ params, lang = 'en', className = '', pureBoard = false }: BoardPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -67,8 +68,9 @@ export default function BoardPreview({ params, lang = 'en', className = '' }: Bo
         canvasHeight: height,
         dpi: 72,
         backgroundColor: '#ffffff',
-        showInfo: true,
-        showScale: true,
+        showInfo: !pureBoard,
+        showScale: !pureBoard,
+        pureBoard,
       });
 
       // Draw the result canvas onto our visible canvas
@@ -76,7 +78,7 @@ export default function BoardPreview({ params, lang = 'en', className = '' }: Bo
     } catch (err) {
       console.error('Render error:', err);
     }
-  }, [params]);
+  }, [params, pureBoard]);
 
   const phys = getBoardPhysicalSize(params);
   const corners = getCornerCount(params);

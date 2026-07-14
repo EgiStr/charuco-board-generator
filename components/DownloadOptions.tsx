@@ -8,6 +8,7 @@ import { downloadPdf, downloadPng, downloadSvg, printBoard } from '@/lib/pdfGene
 interface DownloadOptionsProps {
   params: BoardParams;
   lang: 'en' | 'id';
+  pureBoard: boolean;
 }
 
 const T = {
@@ -29,7 +30,7 @@ const T = {
   },
 };
 
-export default function DownloadOptions({ params, lang }: DownloadOptionsProps) {
+export default function DownloadOptions({ params, lang, pureBoard }: DownloadOptionsProps) {
   const t = T[lang];
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ export default function DownloadOptions({ params, lang }: DownloadOptionsProps) 
     setBusy('pdf');
     setTimeout(() => {
       try {
-        downloadPdf(params);
+        downloadPdf(params, pureBoard);
       } catch (err) {
         console.error('PDF error:', err);
         alert('Failed to generate PDF. Check console for details.');
@@ -50,7 +51,7 @@ export default function DownloadOptions({ params, lang }: DownloadOptionsProps) 
     setBusy('png');
     setTimeout(() => {
       try {
-        downloadPng(params);
+        downloadPng(params, pureBoard);
       } catch (err) {
         console.error('PNG error:', err);
         alert('Failed to generate PNG.');
@@ -63,7 +64,7 @@ export default function DownloadOptions({ params, lang }: DownloadOptionsProps) 
     setBusy('svg');
     setTimeout(() => {
       try {
-        downloadSvg(params);
+        downloadSvg(params, pureBoard);
       } catch (err) {
         console.error('SVG error:', err);
         alert('Failed to generate SVG.');
@@ -74,7 +75,7 @@ export default function DownloadOptions({ params, lang }: DownloadOptionsProps) 
 
   const handlePrint = () => {
     try {
-      printBoard(params);
+      printBoard(params, pureBoard);
     } catch (err) {
       console.error('Print error:', err);
     }
@@ -89,9 +90,14 @@ export default function DownloadOptions({ params, lang }: DownloadOptionsProps) 
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide">
-        {t.title}
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide">
+          {t.title}
+        </h3>
+        {pureBoard && (
+          <span className="text-xs text-zinc-400 italic">(pure board mode)</span>
+        )}
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button onClick={handlePdf} disabled={busy !== null} className={btnClass('pdf')}>
           <FileDown className="w-4 h-4 text-red-500" />

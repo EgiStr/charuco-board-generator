@@ -19,8 +19,11 @@ function esc(s: string): string {
  *
  * The SVG viewBox is sized to the full board extent (checkerboard + margin).
  * All ArUco markers are rendered as individual <rect> elements.
+ *
+ * When pureBoard is true, info text and scale bar are omitted — only
+ * the checkerboard and markers are produced.
  */
-export function generateSvg(params: BoardParams): string {
+export function generateSvg(params: BoardParams, pureBoard?: boolean): string {
   const { squaresX, squaresY, squareLength, markerLength, margin, dictionary: dictName } = params;
 
   // Physical dimensions in mm — the SVG uses mm as its user-unit so that
@@ -35,11 +38,14 @@ export function generateSvg(params: BoardParams): string {
   // ── SVG elements ─────────────────────────────────────────────────────────
   const parts: string[] = [];
 
+  // Determine total SVG height — pureBoard doesn't need scale/info space
+  const totalH = pureBoard ? boardH : boardH + margin + 12;
+
   // Root
-  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${boardW}" height="${boardH}" viewBox="0 0 ${boardW} ${boardH}">`);
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${boardW}" height="${totalH}" viewBox="0 0 ${boardW} ${totalH}">`);
 
   // Background (full board area — pure white)
-  parts.push(`  <rect x="0" y="0" width="${boardW}" height="${boardH}" fill="#ffffff"/>`);
+  parts.push(`  <rect x="0" y="0" width="${boardW}" height="${totalH}" fill="#ffffff"/>`);
 
   // Checkerboard black squares
   for (let row = 0; row < squaresY; row++) {
@@ -96,35 +102,38 @@ export function generateSvg(params: BoardParams): string {
   // Outer border around the checkerboard
   parts.push(`  <rect x="${margin}" y="${margin}" width="${squaresX * squareLength}" height="${squaresY * squareLength}" fill="none" stroke="#000000" stroke-width="0.5"/>`);
 
-  // Scale bar (along the bottom, inside the margin)
-  const scaleBarY = boardH - margin + 2;
-  const scaleBarX = margin;
-  const scaleBarW = squaresX * squareLength;
-  const nTicks = 10;
-  const tickSpacing = scaleBarW / nTicks;
+  // ── Scale bar + info (skipped in pureBoard mode) ─────────────────────────
+  if (!pureBoard) {
+    // Scale bar (along the bottom, inside the margin)
+    const scaleBarY = boardH - margin + 2;
+    const scaleBarX = margin;
+    const scaleBarW = squaresX * squareLength;
+    const nTicks = 10;
+    const tickSpacing = scaleBarW / nTicks;
 
-  parts.push(`  <line x1="${scaleBarX}" y1="${scaleBarY}" x2="${scaleBarX + scaleBarW}" y2="${scaleBarY}" stroke="#000000" stroke-width="0.3"/>`);
+    parts.push(`  <line x1="${scaleBarX}" y1="${scaleBarY}" x2="${scaleBarX + scaleBarW}" y2="${scaleBarY}" stroke="#000000" stroke-width="0.3"/>`);
 
-  for (let i = 0; i <= nTicks; i++) {
-    const tx = scaleBarX + i * tickSpacing;
-    const tickH = i % 5 === 0 ? 3 : 1.5;
-    parts.push(`  <line x1="${tx}" y1="${scaleBarY}" x2="${tx}" y2="${scaleBarY + tickH}" stroke="#000000" stroke-width="0.3"/>`);
+    for (let i = 0; i <= nTicks; i++) {
+      const tx = scaleBarX + i * tickSpacing;
+      const tickH = i % 5 === 0 ? 3 : 1.5;
+      parts.push(`  <line x1="${tx}" y1="${scaleBarY}" x2="${tx}" y2="${scaleBarY + tickH}" stroke="#000000" stroke-width="0.3"/>`);
 
-    if (i % 5 === 0) {
-      const label = Math.round((i / nTicks) * (squaresX * squareLength));
-      parts.push(`  <text x="${tx}" y="${scaleBarY + 5}" font-family="monospace" font-size="2.5" fill="#000000" text-anchor="middle">${label}mm</text>`);
+      if (i % 5 === 0) {
+        const label = Math.round((i / nTicks) * (squaresX * squareLength));
+        parts.push(`  <text x="${tx}" y="${scaleBarY + 5}" font-family="monospace" font-size="2.5" fill="#000000" text-anchor="middle">${label}mm</text>`);
+      }
     }
-  }
 
-  // Info text (top-left of the board)
-  const infoY = margin - 2;
-  const infoLines = [
-    `ChArUco Board: ${squaresX} x ${squaresY}`,
-    `Squares: ${squareLength}mm | Markers: ${markerLength}mm | Dict: ${dictName}`,
-  ];
-  infoLines.forEach((line, i) => {
-    parts.push(`  <text x="${margin}" y="${infoY - (infoLines.length - 1 - i) * 3.5}" font-family="monospace" font-size="2.8" fill="#000000">${esc(line)}</text>`);
-  });
+    // Info text (top-left of the board)
+    const infoY = margin - 2;
+    const infoLines = [
+      `ChArUco Board: ${squaresX} x ${squaresY}`,
+      `Squares: ${squareLength}mm | Markers: ${markerLength}mm | Dict: ${dictName}`,
+    ];
+    infoLines.forEach((line, i) => {
+      parts.push(`  <text x="${margin}" y="${infoY - (infoLines.length - 1 - i) * 3.5}" font-family="monospace" font-size="2.8" fill="#000000">${esc(line)}</text>`);
+    });
+  }
 
   parts.push('</svg>');
   return parts.join('\n');
