@@ -1,24 +1,44 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { BoardParams, getCornerCount, getBoardPhysicalSize, formatDimension, getPaperSize } from '@/lib/utils';
 import { renderCharucoBoard } from '@/lib/charucoRenderer';
-import { getA4BoardMetrics, checkPaperFit } from '@/lib/accuracy';
+import { checkPaperFit } from '@/lib/accuracy';
 
 interface BoardPreviewProps {
   params: BoardParams;
+  lang?: 'en' | 'id';
   className?: string;
 }
 
-export default function BoardPreview({ params, className = '' }: BoardPreviewProps) {
+const PRINT_DPI = 300;
+const PX_PER_MM = PRINT_DPI / 25.4; // 11.811
+const MM_PER_PX = 25.4 / PRINT_DPI; // 0.0847
+
+/** Find the smallest ISO paper that fits the board (checks both orientations). */
+function bestPaper(wMm: number, hMm: number): { name: string; orientation: 'portrait' | 'landscape'; scalePct: number } | null {
+  const papers = [
+    { name: 'A4' as const, w: 210, h: 297 },
+    { name: 'A3' as const, w: 297, h: 420 },
+    { name: 'A2' as const, w: 420, h: 594 },
+    { name: 'A1' as const, w: 594, h: 841 },
+  ];
+  for (const p of papers) {
+    if (wMm <= p.w && hMm <= p.h) return { name: p.name, orientation: 'portrait', scalePct: 100 };
+    if (wMm <= p.h && hMm <= p.w) return { name: p.name, orientation: 'landscape', scalePct: 100 };
+  }
+  return null;
+}
+
+/** Scale percentage needed to fit board on a given paper size (0 if it already fits). */
+function scaleNeededFor(boardW: number, boardH: number, pageW: number, pageH: number): number | null {
+  const s = Math.min(pageW / boardW, pageH / boardH);
+  return s < 1 ? s * 100 : null;
+}
+
+export default function BoardPreview({ params, lang = 'en', className = '' }: BoardPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [accuracy, setAccuracy] = useState<{
-    mmPerPx: number;
-    pxPerMm: number;
-    fitsA4: boolean;
-    fitsA3: boolean;
-  } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -53,20 +73,6 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
 
       // Draw the result canvas onto our visible canvas
       ctx.drawImage(result.canvas, 0, 0);
-
-      // Update accuracy info
-      const metrics = getA4BoardMetrics(
-        params.squaresX,
-        params.squaresY,
-        params.squareLength,
-        params.margin,
-      );
-      setAccuracy({
-        mmPerPx: result.mmPerPx,
-        pxPerMm: result.pxPerMm,
-        fitsA4: metrics.fitsA4,
-        fitsA3: metrics.fitsA3,
-      });
     } catch (err) {
       console.error('Render error:', err);
     }
@@ -76,6 +82,42 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
   const corners = getCornerCount(params);
   const paperDims = getPaperSize(params.paperSize, params.orientation, params.customWidth, params.customHeight);
   const fit = checkPaperFit(params, paperDims);
+  const best = bestPaper(phys.width, phys.height);
+
+  // Scale needed on currently selected paper
+  const selScale = scaleNeededFor(phys.width, phys.height, paperDims.width, paperDims.height);
+
+  const T = {
+    en: {
+      accuracy: '🖨️ Print Accuracy (300 DPI) — FIXED',
+      pxPerMm: 'px/mm',
+      square: 'Square',
+      board: 'Board',
+      printSize: '📄 Print Size on Selected Paper',
+      pxAt300: 'px at 300 DPI',
+      tooLarge: 'Board TOO LARGE',
+      needsScale: 'needs',
+      scalePct: 'scale',
+      fitsAt: 'fits at 100% scale',
+      bestPaper: 'Best paper',
+      atScale: 'at',
+    },
+    id: {
+      accuracy: '🖨️ Akurasi Cetak (300 DPI) — TETAP',
+      pxPerMm: 'px/mm',
+      square: 'Kotak',
+      board: 'Board',
+      printSize: '📄 Ukuran Cetak di Kertas Terpilih',
+      pxAt300: 'px di 300 DPI',
+      tooLarge: 'Board TERLALU BESAR',
+      needsScale: 'butuh',
+      scalePct: 'skala',
+      fitsAt: 'cocok di skala 100%',
+      bestPaper: 'Kertas terbaik',
+      atScale: 'pd',
+    },
+  };
+  const t = T[lang];
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -86,12 +128,12 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
 
-      {/* Board Info + Accuracy */}
+      {/* Board Info */}
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
           <span className="text-zinc-500 dark:text-zinc-400">Board</span>
           <p className="font-semibold text-zinc-800 dark:text-zinc-200">
-            {params.squaresX} × {params.squaresY}
+            {params.squaresX} &times; {params.squaresY}
           </p>
         </div>
         <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
@@ -101,7 +143,7 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
         <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
           <span className="text-zinc-500 dark:text-zinc-400">Size</span>
           <p className="font-semibold text-zinc-800 dark:text-zinc-200">
-            {formatDimension(phys.width, params.unit)} ×{' '}
+            {formatDimension(phys.width, params.unit)} &times;{' '}
             {formatDimension(phys.height, params.unit)}
           </p>
         </div>
@@ -113,34 +155,56 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
         </div>
       </div>
 
-      {/* Accuracy details — shown only after first render */}
-      {accuracy && (
-        <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
-          <span className="text-zinc-500 dark:text-zinc-400">Accuracy Check</span>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-            <span className="text-zinc-700 dark:text-zinc-300">
-              1px = <strong>{accuracy.mmPerPx.toFixed(4)}mm</strong>
-            </span>
-            <span className="text-zinc-700 dark:text-zinc-300">
-              <strong>{accuracy.pxPerMm.toFixed(1)}</strong> px/mm
-            </span>
-            <span
-              className={`font-semibold ${
-                accuracy.fitsA4
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-amber-600 dark:text-amber-400'
-              }`}
-            >
-              {accuracy.fitsA4 ? '✓ Fits A4' : '✗ Exceeds A4'}
-            </span>
-            {accuracy.fitsA3 && !accuracy.fitsA4 && (
+      {/* Print Accuracy — FIXED at 300 DPI, not screen preview */}
+      <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
+        <span className="text-zinc-500 dark:text-zinc-400">{t.accuracy}</span>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+          <span className="text-zinc-700 dark:text-zinc-300">
+            1px = <strong>{MM_PER_PX.toFixed(4)}mm</strong>
+          </span>
+          <span className="text-zinc-700 dark:text-zinc-300">
+            <strong>{PX_PER_MM.toFixed(2)}</strong> {t.pxPerMm}
+          </span>
+          <span className="text-zinc-700 dark:text-zinc-300">
+            {t.square}: <strong>{params.squareLength}mm</strong> &rarr; {(params.squareLength * PX_PER_MM).toFixed(0)}px
+          </span>
+          <span className="text-zinc-700 dark:text-zinc-300">
+            {t.board}: <strong>{phys.width.toFixed(0)}&times;{phys.height.toFixed(0)}mm</strong> &rarr; {(phys.width * PX_PER_MM).toFixed(0)}&times;{(phys.height * PX_PER_MM).toFixed(0)}px
+          </span>
+        </div>
+      </div>
+
+      {/* Print Size on Selected Paper */}
+      <div className="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
+        <span className="text-zinc-500 dark:text-zinc-400">{t.printSize}</span>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+          <span className="text-zinc-700 dark:text-zinc-300">
+            Board: <strong>{phys.width.toFixed(0)}&times;{phys.height.toFixed(0)}mm</strong> &rarr; {(phys.width * PX_PER_MM).toFixed(0)}&times;{(phys.height * PX_PER_MM).toFixed(0)} {t.pxAt300}
+          </span>
+          <span className="text-zinc-700 dark:text-zinc-300">
+            {params.paperSize} ({paperDims.width}&times;{paperDims.height}mm):
+            {selScale !== null ? (
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                {' '}&mdash; {t.tooLarge} ({t.needsScale} {selScale.toFixed(0)}% {t.scalePct})
+              </span>
+            ) : (
               <span className="font-semibold text-green-600 dark:text-green-400">
-                ✓ Fits A3
+                {' '}&mdash; {t.fitsAt}
               </span>
             )}
-          </div>
+          </span>
         </div>
-      )}
+        {best && (
+          <p className="mt-1 text-green-600 dark:text-green-400">
+            {t.bestPaper}: <strong>{best.name} ({best.orientation})</strong> {t.atScale} 100%
+          </p>
+        )}
+        {!best && (
+          <p className="mt-1 text-amber-600 dark:text-amber-400">
+            {t.bestPaper}: A1+ ({lang === 'en' ? 'custom / tiled print needed' : 'cetak custom / tile diperlukan'})
+          </p>
+        )}
+      </div>
 
       {/* Paper Fit Warning */}
       <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-medium ${
@@ -149,8 +213,8 @@ export default function BoardPreview({ params, className = '' }: BoardPreviewPro
           : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
       }`}>
         {fit.fits
-          ? `✅ Board fits ${params.paperSize} at 1:1 scale (${fit.boardWidthMm}×${fit.boardHeightMm}mm within ${fit.pageWidthMm}×${fit.pageHeightMm}mm)`
-          : `❌ Board ${fit.boardWidthMm}×${fit.boardHeightMm}mm is too large for ${params.paperSize} (${fit.pageWidthMm}×${fit.pageHeightMm}mm). ${fit.scaleNeeded < 1 ? `Will be scaled by ${(fit.scaleNeeded * 100).toFixed(0)}%.` : 'Try a larger paper size.'}`
+          ? `✅ Board fits ${params.paperSize} at 1:1 scale (${fit.boardWidthMm}\u00d7${fit.boardHeightMm}mm within ${fit.pageWidthMm}\u00d7${fit.pageHeightMm}mm)`
+          : `❌ Board ${fit.boardWidthMm}\u00d7${fit.boardHeightMm}mm is too large for ${params.paperSize} (${fit.pageWidthMm}\u00d7${fit.pageHeightMm}mm). ${fit.scaleNeeded < 1 ? `Will be scaled by ${(fit.scaleNeeded * 100).toFixed(0)}%.` : 'Try a larger paper size.'}`
         }
       </div>
     </div>

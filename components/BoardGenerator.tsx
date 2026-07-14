@@ -8,6 +8,7 @@ import ParameterControls from './ParameterControls';
 import BoardPreview from './BoardPreview';
 import DownloadOptions from './DownloadOptions';
 import Presets from './Presets';
+import PaperReference from './PaperReference';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
 
@@ -15,6 +16,7 @@ export default function BoardGenerator() {
   const [params, setParams] = useState<BoardParams>(getDefaultParams());
   const [lang, setLang] = useState<'en' | 'id'>('en');
   const [copied, setCopied] = useState(false);
+  const [showRef, setShowRef] = useState(false);
 
   // Load params from URL on mount
   useEffect(() => {
@@ -132,10 +134,26 @@ export default function BoardGenerator() {
 
           {/* Preview + Download */}
           <div className="lg:col-span-2 space-y-4">
-            <BoardPreview params={params} className="h-[400px] sm:h-[500px] lg:h-[600px]" />
+            <BoardPreview params={params} lang={lang} className="h-[400px] sm:h-[500px] lg:h-[600px]" />
 
             <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4">
               <DownloadOptions params={params} lang={lang} />
+            </div>
+
+            {/* Real-World Paper Reference (collapsible) */}
+            <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4">
+              <button
+                onClick={() => setShowRef(!showRef)}
+                className="flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors w-full"
+              >
+                <span>{showRef ? '\u25BC' : '\u25B6'}</span>
+                {lang === 'en' ? '\uD83D\uDCD0 Real-World Paper Reference' : '\uD83D\uDCD0 Referensi Kertas Dunia Nyata'}
+              </button>
+              {showRef && (
+                <div className="mt-3">
+                  <PaperReference lang={lang} />
+                </div>
+              )}
             </div>
           </div>
         </div>
