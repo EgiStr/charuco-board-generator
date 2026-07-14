@@ -14,7 +14,6 @@
 
 import { BoardParams, getCornerCount, formatDimension } from './utils';
 import { getDictionary, renderMarkerOnCanvas } from './arucoDictionaries';
-import { calcScale } from './accuracy';
 
 export interface RenderOptions {
   /** Total width of the canvas in pixels */
@@ -34,6 +33,12 @@ export interface RenderOptions {
    * Overrides showInfo/showScale/backgroundColor when true.
    */
   pureBoard?: boolean;
+  /**
+   * Render mode: 'screen' fits board into canvas with padding and centering;
+   * 'print' renders at exact physical size (dpi/25.4 px/mm) with no padding.
+   * Default: 'screen'.
+   */
+  renderMode?: 'screen' | 'print';
 }
 
 export interface RenderResult {
@@ -70,6 +75,7 @@ export function renderCharucoBoard(
     showScale: optShowScale = true,
     dpi = 72,
     pureBoard = false,
+    renderMode = 'screen',
   } = options;
 
   // PureBoard overrides
@@ -88,23 +94,36 @@ export function renderCharucoBoard(
   const boardWidthMm = squaresX * squareLength + 2 * margin;
   const boardHeightMm = squaresY * squareLength + 2 * margin;
 
-  // Scale: fit board into canvas with padding
-  const padding = 20; // pixels
-  const availableW = canvasWidth - 2 * padding;
-  const availableH = canvasHeight - 2 * padding;
+  // ── Calculate scale ──
+  let scale: number;
+  let offsetX: number;
+  let offsetY: number;
+  let boardPxW: number;
+  let boardPxH: number;
 
-  // Reserve space for scale bar if shown
-  const scaleBarReserve = showScale ? 24 : 0;
+  if (renderMode === 'print') {
+    // PRINT: exact physical size at given DPI, no padding, no centering
+    // Canvas MUST be exactly boardWidthMm * dpi / 25.4 pixels
+    scale = dpi / 25.4;
+    offsetX = 0;
+    offsetY = 0;
+    boardPxW = boardWidthMm * scale;
+    boardPxH = boardHeightMm * scale;
+  } else {
+    // SCREEN: fit board into canvas with padding
+    const padding = 20; // pixels
+    const availableW = canvasWidth - 2 * padding;
+    const availableH = canvasHeight - 2 * padding;
+    const scaleBarReserve = showScale ? 24 : 0;
+    const scaleX = availableW / boardWidthMm;
+    const scaleY = (availableH - scaleBarReserve) / boardHeightMm;
+    scale = Math.min(scaleX, scaleY);
 
-  const scaleX = availableW / boardWidthMm;
-  const scaleY = (availableH - scaleBarReserve) / boardHeightMm;
-  const scale = Math.min(scaleX, scaleY);
-
-  // Board pixel dimensions
-  const boardPxW = boardWidthMm * scale;
-  const boardPxH = boardHeightMm * scale;
-  const offsetX = (canvasWidth - boardPxW) / 2;
-  const offsetY = (canvasHeight - boardPxH) / 2;
+    boardPxW = boardWidthMm * scale;
+    boardPxH = boardHeightMm * scale;
+    offsetX = (canvasWidth - boardPxW) / 2;
+    offsetY = (canvasHeight - boardPxH) / 2;
+  }
 
   const squarePx = squareLength * scale;
   const markerPx = markerLength * scale;
@@ -113,8 +132,11 @@ export function renderCharucoBoard(
   const dict = getDictionary(dictName);
   const cellSize = Math.max(1, Math.floor(markerPx / (dict.markerSize + 2)));
 
-  // Accuracy scale
-  const { mmPerPx, pxPerMm } = calcScale(squareLength, squarePx);
+  // ── Accuracy — ALWAYS theoretical DPI-based, never screen-fit ──
+  // For 'print' mode: pxPerMm = dpi / 25.4
+  // For 'screen' mode: also show theoretical DPI for print reference
+  const pxPerMm = dpi / 25.4;
+  const mmPerPx = 25.4 / dpi;
 
   // ── Clear ──────────────────────────────────────────────────────────────
   // Use pure white for everything
@@ -200,7 +222,7 @@ export function renderCharucoBoard(
   // they interfere with OpenCV ChArUco detection.
   // The checkerboard squares ARE the grid.
 
-  if (showScale) {
+  if (showScale && renderMode === 'screen') {
     const scaleBarY = offsetY + boardPxH + 6;
     const scaleBarX = offsetX + marginPx;
     const scaleBarW = squaresX * squarePx;
@@ -243,13 +265,13 @@ export function renderCharucoBoard(
   }
 
   // ── Info text ──────────────────────────────────────────────────────────
-  if (showInfo) {
+  if (showInfo && renderMode === 'screen') {
     const fontSize = Math.max(10, Math.min(14, Math.floor(canvasWidth / 60)));
     ctx.font = `${fontSize}px monospace`;
     ctx.fillStyle = '#000000'; // Pure black, was #333333
 
     // Add the scale reference note
-    const scaleNote = `Scale: 1px = ${mmPerPx.toFixed(4)}mm | Squares: ${squareLength}mm | ${dpi} DPI`;
+    const scaleNote = `Scale: 1px = ${mmPerPx.toFixed(4)}mm (at ${dpi} DPI)`;
 
     const infoLines = [
       `ChArUco Board: ${squaresX} × ${squaresY}`,
@@ -306,27 +328,19 @@ export function renderCharucoBoardForPrint(
   params: BoardParams,
   dpi: number = 300,
 ): HTMLCanvasElement {
-  const { boardWidthMm, boardHeightMm } = getBoardPixelSize(params, dpi);
+  const pxPerMm = dpi / 25.4;
+  const boardWidthMm = params.squaresX * params.squareLength + 2 * params.margin;
+  const boardHeightMm = params.squaresY * params.squareLength + 2 * params.margin;
   return renderCharucoBoard(params, {
-    canvasWidth: Math.ceil(boardWidthMm),
-    canvasHeight: Math.ceil(boardHeightMm),
+    canvasWidth: Math.ceil(boardWidthMm * pxPerMm),
+    canvasHeight: Math.ceil(boardHeightMm * pxPerMm),
     dpi,
     backgroundColor: '#ffffff',
-    showInfo: true,
-    showScale: true,
+    showInfo: false,
+    showScale: false,
+    pureBoard: true,
+    renderMode: 'print',
   }).canvas;
 }
 
-function getBoardPixelSize(
-  params: BoardParams,
-  dpi: number,
-): { boardWidthMm: number; boardHeightMm: number } {
-  const { squaresX, squaresY, squareLength, margin } = params;
-  const boardWidthMm = squaresX * squareLength + 2 * margin;
-  const boardHeightMm = squaresY * squareLength + 2 * margin;
-  const pxPerMm = dpi / 25.4;
-  return {
-    boardWidthMm: boardWidthMm * pxPerMm,
-    boardHeightMm: boardHeightMm * pxPerMm,
-  };
-}
+

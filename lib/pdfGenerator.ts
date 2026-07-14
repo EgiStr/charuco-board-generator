@@ -55,6 +55,7 @@ export async function generatePdf(params: BoardParams, pureBoard?: boolean): Pro
     showInfo: !pureBoard,
     showScale: !pureBoard,
     pureBoard,
+    renderMode: 'print',
   });
 
   // Create PDF
@@ -122,6 +123,7 @@ export function downloadPng(params: BoardParams, pureBoard?: boolean): void {
     showInfo: !pureBoard,
     showScale: !pureBoard,
     pureBoard,
+    renderMode: 'print',
   });
 
   const url = result.canvas.toDataURL('image/png');

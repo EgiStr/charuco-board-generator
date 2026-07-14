@@ -72,6 +72,7 @@ export default function BoardPreview({ params, lang = 'en', className = '', pure
         showInfo: !pureBoard,
         showScale: !pureBoard,
         pureBoard,
+        renderMode: 'screen',
       });
 
       // Draw the result canvas onto our visible canvas
