@@ -1,13 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable static export for Vercel deployment
-  output: "export",
-
-  // Optimize images
-  images: {
-    unoptimized: true,
-  },
+  // Vercel handles both static & server rendering natively
+  // No need for `output: "export"` — Vercel's builder optimizes automatically
 
   // Skip trailing slash issues
   trailingSlash: true,
