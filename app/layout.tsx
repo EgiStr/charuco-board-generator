@@ -29,6 +29,13 @@ export const metadata: Metadata = {
     title: "ChArUco Board Generator",
     description: "Generate and download printable ChArUco boards for camera calibration",
     type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ChArUco Board Generator",
+    description: "Generate printable, OpenCV-compatible ChArUco calibration boards",
+    images: ["/og-image.png"],
   },
 };
 
