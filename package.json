@@ -1,7 +1,7 @@
 {
   "name": "charuco-board-generator",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -26,8 +26,13 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "pg": "^8.22.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
-  }
+  },
+  "description": "Generate printable, OpenCV-compatible ChArUco calibration boards (Next.js + TypeScript).",
+  "keywords": ["charuco", "aruco", "opencv", "camera-calibration", "calibration-board", "nextjs"],
+  "author": "Egi Satria",
+  "license": "MIT"
 }

@@ -119,7 +119,7 @@ def detect_charuco_board(images, dictionary, board):
     all_corners = []
     all_ids = []
     valid_indices = []
-    detector_params = cv2.aruco.DetectorParameters()
+    charuco_detector = cv2.aruco.CharucoDetector(board)
 
     for idx, img_path in enumerate(images):
         img = cv2.imread(str(img_path))
@@ -128,21 +128,11 @@ def detect_charuco_board(images, dictionary, board):
             continue
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        marker_corners, marker_ids, _ = cv2.aruco.detectMarkers(
-            gray, dictionary, parameters=detector_params
-        )
+        charuco_corners, charuco_ids, marker_corners, marker_ids = charuco_detector.detectBoard(gray)
 
         if marker_ids is None or len(marker_ids) < 4:
             print(f"  [SKIP] {img_path.name}: only {0 if marker_ids is None else len(marker_ids)} markers detected")
             continue
-
-        # Attempt to refine markers using the full board layout
-        cv2.aruco.refineDetectedMarkers(gray, board, marker_corners, marker_ids)
-
-        # Interpolate chessboard corners from the detected markers
-        charuco_corners, charuco_ids = cv2.aruco.interpolateCornersCharuco(
-            marker_corners, marker_ids, gray, board
-        )
 
         if charuco_ids is None or len(charuco_ids) < 4:
             print(f"  [SKIP] {img_path.name}: too few ChArUco corners ({0 if charuco_ids is None else len(charuco_ids)})")
@@ -166,7 +156,7 @@ def detect_charuco_board(images, dictionary, board):
 
 
 def run_calibration(all_corners, all_ids, board, image_size, fix_principal_point=False):
-    """Run ChArUco-based camera calibration.
+    """Run camera calibration from detected ChArUco corners.
 
     Returns:
         (rms_error, camera_matrix, distortion_coefficients, rvecs, tvecs)
@@ -176,8 +166,16 @@ def run_calibration(all_corners, all_ids, board, image_size, fix_principal_point
         flags |= cv2.CALIB_FIX_PRINCIPAL_POINT
 
     print(f"\n[INFO] Running calibration with {len(all_corners)} view(s) ...")
-    ret, mtx, dist, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(
-        all_corners, all_ids, board, image_size, None, None, flags=flags
+    all_obj_pts = []
+    all_img_pts = []
+    for corners, ids in zip(all_corners, all_ids):
+        if corners is not None and ids is not None and len(corners) > 0:
+            obj_pts, img_pts = board.matchImagePoints(corners, ids)
+            if obj_pts is not None and img_pts is not None:
+                all_obj_pts.append(obj_pts)
+                all_img_pts.append(img_pts)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+        all_obj_pts, all_img_pts, image_size, None, None, flags=flags
     )
     print(f"[INFO] RMS reprojection error: {ret:.4f} pixels\n")
     return ret, mtx, dist, rvecs, tvecs

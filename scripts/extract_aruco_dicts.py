@@ -36,20 +36,27 @@ DICT_NAMES = [
 def extract_bytes(name, enum_val):
     """Extract bytesList from a predefined dictionary."""
     dict_obj = cv2.aruco.getPredefinedDictionary(enum_val)
-    bytes_list = dict_obj.bytesList  # shape: (nMarkers, bytesPerMarker, 4)
+    bytes_list = dict_obj.bytesList  # shape: (nMarkers, bytesPerMarker, 4), CV_8UC4
 
     marker_size = int(name.split("_")[1].split("X")[0])
     bits_per_marker = marker_size * marker_size
     bytes_per_marker = (bits_per_marker + 7) // 8
     n_markers = int(name.split("_")[2])
 
-    # bytesList shape in OpenCV 5.x: (nMarkers, bytesPerMarker, 4)
-    # where dimension 2 = 4 rotations (0, 90, 180, 270 clockwise)
+    # CRITICAL: bytesList is a CV_8UC4 Mat with shape (nMarkers, bytesPerMarker, 4).
+    # Rotation r's bytes are CONTIGUOUS in linear row memory:
+    #   row.flatten() == [rot0 (bytesPerMarker B) | rot1 | rot2 | rot3].
+    # Do NOT index the (byte, rotation) column (bytes_list[m, b, r]) — that reads
+    # strided memory and produces transposed garbage. Flatten each marker row
+    # in C order and store the blocks contiguously.
+    import numpy as np
     flat = []
     for m_idx in range(n_markers):
-        for r_idx in range(4):
-            for b_idx in range(bytes_per_marker):
-                flat.append(int(bytes_list[m_idx, b_idx, r_idx]))
+        row = np.asarray(bytes_list[m_idx]).flatten().tolist()
+        assert len(row) == 4 * bytes_per_marker, (
+            f"{name} marker {m_idx}: expected {4 * bytes_per_marker} bytes, got {len(row)}"
+        )
+        flat.extend(int(v) for v in row)
 
     return flat, marker_size, n_markers, bytes_per_marker
 
@@ -130,6 +137,16 @@ def generate_ts():
     lines.append("/**")
     lines.append(" * Extract a single marker's bit matrix from bytesList data.")
     lines.append(" * Uses rotation 0 (no rotation).")
+    lines.append(" *")
+    lines.append(" * OpenCV convention: bit 1 = WHITE, bit 0 = BLACK (see")
+    lines.append(" * Dictionary::generateImageMarker / getBitsFromByteList). This function")
+    lines.append(" * returns 1=BLACK, 0=WHITE (inverted), matching the renderers which")
+    lines.append(" * paint a cell black when the value is 1.")
+    lines.append(" *")
+    lines.append(" * The stored data is one marker row flattened in C order:")
+    lines.append(" * [rot0 (bytesPerMarker B) | rot1 | rot2 | rot3]. For marker sizes")
+    lines.append(" * whose bit count is not a multiple of 8, only the LOW (nBits % 8)")
+    lines.append(" * bits of the last byte belong to the marker (high bits are padding).")
     lines.append(" */")
     lines.append("export function extractMarkerBits(")
     lines.append("  data: Uint8Array,")
@@ -137,23 +154,34 @@ def generate_ts():
     lines.append("  markerSize: number,")
     lines.append("  bytesPerMarker: number,")
     lines.append("): number[][] {")
-    lines.append("  // OpenCV bytesList layout: [marker][rotation][byte]")
-    lines.append("  // Each marker has 4 rotations, each rotation has bytesPerMarker bytes")
     lines.append("  const rotationBytes = 4 * bytesPerMarker;")
-    lines.append("  const offset = markerId * rotationBytes;")
-    lines.append("  // Use rotation 0 (first rotation)")
-    lines.append("  const rotOffset = offset;")
+    lines.append("  const base = markerId * rotationBytes; // rotation 0 starts here")
     lines.append("")
+    lines.append("  // Collect ALL bits MSB-first from the rot0 block ...")
+    lines.append("  const allBits: number[] = [];")
+    lines.append("  for (let b = 0; b < bytesPerMarker; b++) {")
+    lines.append("    const byte = data[base + b];")
+    lines.append("    for (let bitPos = 7; bitPos >= 0; bitPos--) {")
+    lines.append("      allBits.push((byte >> bitPos) & 1);")
+    lines.append("    }")
+    lines.append("  }")
+    lines.append("  // ... then take the FIRST nBits: floor(nBits/8) full bytes plus the")
+    lines.append("  // LOW (nBits % 8) bits of the next byte (OpenCV getBitsFromByteList).")
+    lines.append("  const nBits = markerSize * markerSize;")
+    lines.append("  const fullBytes = Math.floor(nBits / 8);")
+    lines.append("  const restBits = nBits % 8;")
+    lines.append("  const markerBits = allBits.slice(0, fullBytes * 8);")
+    lines.append("  if (restBits > 0) {")
+    lines.append("    const tailByteStart = (fullBytes + 1) * 8 - restBits;")
+    lines.append("    markerBits.push(...allBits.slice(tailByteStart, (fullBytes + 1) * 8));")
+    lines.append("  }")
+    lines.append("")
+    lines.append("  // Invert: OpenCV 1=white -> renderer 1=black.")
     lines.append("  const matrix: number[][] = [];")
-    lines.append("  let bitIdx = 0;")
     lines.append("  for (let row = 0; row < markerSize; row++) {")
     lines.append("    const matrixRow: number[] = [];")
     lines.append("    for (let col = 0; col < markerSize; col++) {")
-    lines.append("      const byteIdx = rotOffset + Math.floor(bitIdx / 8);")
-    lines.append("      const bitPos = bitIdx % 8;")
-    lines.append("      const bit = (data[byteIdx] >> (7 - bitPos)) & 1;")
-    lines.append("      matrixRow.push(bit);")
-    lines.append("      bitIdx++;")
+    lines.append("      matrixRow.push(markerBits[row * markerSize + col] === 1 ? 0 : 1);")
     lines.append("    }")
     lines.append("    matrix.push(matrixRow);")
     lines.append("  }")

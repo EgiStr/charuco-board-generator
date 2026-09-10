@@ -258,41 +258,78 @@ describe('Marker availability for board configurations', () => {
   });
 });
 
-// ─── 10. Specific marker pattern verification ───
-// Verify known markers from DICT_6X6_250 to catch regressions
+// ─── 11. OpenCV parity: stored bytes decode to official rot0 bits ───
+// Guards the two historical bugs: (a) strided column extraction of bytesList
+// rows, (b) wrong polarity / tail-bit packing. Reference vectors verified
+// with cv2.aruco.Dictionary_getBitsFromByteList (OpenCV 5.0.0); the stored
+// convention is 1=black (inverted from OpenCV's 1=white).
+
+describe('OpenCV parity (official bytesList rot0, 1=black)', () => {
+  const cases: Array<{ dict: string; id: number; black: string }> = [
+    // 4x4: 16 bits = 2 full bytes, no tail
+    { dict: 'DICT_4X4_50', id: 0, black: '0100101011001101' },
+    { dict: 'DICT_4X4_50', id: 1, black: '1111000001100101' },
+    // 5x5: 25 bits = 3 full bytes + low 1 bit of byte 3
+    { dict: 'DICT_5X5_100', id: 0, black: '0101110100100110101000011' },
+    { dict: 'DICT_5X5_100', id: 1, black: '1111000111111100100011001' },
+    // 6x6: 36 bits = 4 full bytes + low 4 bits of byte 4
+    { dict: 'DICT_6X6_250', id: 0, black: '111000011100001000100111110101011001' },
+    { dict: 'DICT_6X6_250', id: 1, black: '111100010000010001011100011101101110' },
+    // 7x7: 49 bits = 6 full bytes + low 1 bit of byte 6
+    { dict: 'DICT_7X7_50', id: 0, black: '0010001010100011100100110101101000110101111101010' },
+    { dict: 'DICT_7X7_50', id: 1, black: '0001101111100100000011101100000110111111010101001' },
+  ];
+
+  for (const { dict: dictName, id, black } of cases) {
+    it(`${dictName} marker ${id} matches official OpenCV bits`, () => {
+      const dict = getDictionary(dictName);
+      const bits = getMarkerBits(dict, id);
+      const flat = bits.map(r => r.join('')).join('');
+      expect(flat).toBe(black);
+    });
+  }
+
+  it('rot0 block is the contiguous row head (not a strided column)', () => {
+    // DICT_6X6_250 marker 0: contiguous row head must be [30,61,216,42,6].
+    // The old strided-column bug read [30,6,49,187,198] instead.
+    const entry = ARUCO_DICT_DATA['DICT_6X6_250'];
+    const head = Array.from(entry.data.slice(0, 5));
+    expect(head).toEqual([30, 61, 216, 42, 6]);
+  });
+});
 
 describe('Specific marker patterns (DICT_6X6_250)', () => {
   const dict = getDictionary('DICT_6X6_250');
 
   it('marker 0 has exact known pattern', () => {
     const bits = getMarkerBits(dict, 0);
-    // Flatten to a string for easy comparison
+    // Flatten to a string for easy comparison (1=black, 0=white)
     const flat = bits.map(r => r.join('')).join('');
-    // DICT_6X6_250 marker 0
-    // bytes [rot0] = [30, 6, 49, 187, 198]
-    // bits:  00011110 00000110 00110001 10111011 11000110
-    // first 36 bits (6×6):
-    // Row 0: 000111
-    // Row 1: 100000
-    // Row 2: 011000
-    // Row 3: 110001
-    // Row 4: 101110
-    // Row 5: 111100
-    expect(flat).toBe('000111100000011000110001101110111100');
+    // DICT_6X6_250 marker 0, verified against
+    // cv2.aruco.Dictionary_getBitsFromByteList (OpenCV 5.0.0):
+    // rot0 block = [30, 61, 216, 42, 6] -> first 32 bits + low 4 bits of last byte
+    // white=000111100011110111011000001010100110 -> inverted to black=1:
+    // Row 0: 111000
+    // Row 1: 011100
+    // Row 2: 001000
+    // Row 3: 100111
+    // Row 4: 110101
+    // Row 5: 011001
+    expect(flat).toBe('111000011100001000100111110101011001');
   });
 
   it('marker 1 has exact known pattern', () => {
     const bits = getMarkerBits(dict, 1);
     const flat = bits.map(r => r.join('')).join('');
-    // DICT_6X6_250 marker 1
-    // bytes [rot0]: [14, 1, 5, 93, 1]
-    // bits: 00001110 00000001 00000101 01011101 00000001
-    // Row 0: 000011
-    // Row 1: 100000
-    // Row 2: 000100
-    // Row 3: 000101
-    // Row 4: 010111
-    // Row 5: 010000
-    expect(flat).toBe('000011100000000100000101010111010000');
+    // DICT_6X6_250 marker 1, verified against OpenCV 5.0.0:
+    // rot0 block = [14, 251, 163, 137, 1]
+    // white=000011101111101110100011100010010001 -> inverted to black=1:
+    // Row 0: 111100
+    // Row 1: 010000
+    // Row 2: 010001
+    // Row 3: 011100
+    // Row 4: 011101
+    // Row 5: 101110
+    expect(flat).toBe('111100010000010001011100011101101110');
   });
 });
